@@ -1,0 +1,92 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i">
+    </head>
+    <body>
+        <section style="margin: 20px; width: 250px; font-size: 12px !important; font-family: 'Nunito', sans-serif;">
+            <div style="font-size:16px; font-weight:bold; text-align:center;">
+                RS KAROMAH HOLISTIC
+            </div>
+            <hr style="margin: 3px 0 3px 0;">
+            <div style="font-size: 14; text-align:center;">
+                Bukti Registrasi Pendaftaran
+            </div>
+            <table style="font-size: 12px; font-weight: normal;">
+                <tr>
+                    <td>Tanggal</td>
+                    <td>:</td>
+                    <td id="tanggal">9 Mei 2023</td>
+                </tr>
+                <tr>
+                    <td>No Rawat</td>
+                    <td>:</td>
+                    <td id="noRawat">2023/05/09/000008</td>
+                </tr>
+                <tr>
+                    <td>No Antrian</td>
+                    <td>:</td>
+                    <td id="noAntri">001</td>
+                </tr>
+                <tr style="vertical-align: top;">
+                    <td>Nama</td>
+                    <td>:</td>
+                    <td id="nama">NY SARDINAH</td>
+                </tr>
+                <tr>
+                    <td>No RM</td>
+                    <td>:</td>
+                    <td id="noRM">043504</td>
+                </tr>
+                <tr style="vertical-align: top;">
+                    <td>Jenis Kelamin</td>
+                    <td>:</td>
+                    <td id="jk">Perempuan</td>
+                </tr>
+                <tr>
+                    <td>Jenis Bayar</td>
+                    <td>:</td>
+                    <td id="jenis">BPJS Kesehatan</td>
+                </tr>
+                <tr>
+                    <td>Ruang</td>
+                    <td>:</td>
+                    <td id="poli">Poliklinik Mata</td>
+                </tr>
+                <tr>
+                    <td>Dokter</td>
+                    <td>:</td>
+                    <td id="dokter">dr. guntur Susetyo, Sp.M</td>
+                </tr>
+            </table>
+            <hr style="margin: 3px 0 3px 0;">
+            <div style="text-align:center;">
+                Terima kasih atas kepercayaan Anda
+                Semoga lekas sembuh.
+            </div>
+            <hr style="margin: 3px 0 3px 0;">
+            <div style="text-align:center;">
+                Bawalah surat rujukan atau surat kontrol asli dan tunjukkan pada petugas di Lobby resepsionis.
+            </div>
+        </section>
+        <script>
+            const month = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+
+            window.api.handle('APMPrint', content => {
+                const today = new Date()
+                const format = `${today.getDate()} ${month[today.getMonth()]} ${today.getFullYear()}`
+
+                document.getElementById('tanggal').innerText = format
+                document.getElementById('noRawat').innerText = content.noRawat
+                document.getElementById('noAntri').innerText = content.noAntri
+                document.getElementById('nama').innerText = content.nama
+                document.getElementById('noRM').innerText = content.noRM
+                document.getElementById('jk').innerText = content.jk
+                document.getElementById('jenis').innerText = content.jenis
+                document.getElementById('poli').innerText = content.poli
+                document.getElementById('dokter').innerText = content.dokter
+
+                window.api.send('APMReadyToPrint')
+            })
+        </script>
+    </body>
+</html>

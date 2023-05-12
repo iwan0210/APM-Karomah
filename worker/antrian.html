@@ -1,0 +1,42 @@
+<html>
+    <head>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Nunito:200,200i,300,300i,400,400i,600,600i,700,700i,800,800i,900,900i">
+    </head>
+    <body>
+        <section style="margin: 20px; width: 170px; font-size: 12px !important; font-family: 'Nunito', sans-serif;">
+            <div style="font-size:14px; font-weight:bold; text-align:center;">
+                RS KAROMAH HOLISTIC
+            </div>
+            <hr style="margin: 3px 0 3px 0;">
+            <div style="text-align:center;">
+                Nomor Antrian Pendaftaran
+            </div>
+            <div id="antrian" style="font-size:42px; font-weight:bold; text-align:center;">
+                5
+            </div>
+            <div style="font-size:12px; font-weight:bold; text-align:center;" id="tgl_jam">
+                9 Mei 2023 14:00:00
+            </div>
+            <div style="font-size:11px; text-align:center;">
+                Silahkan melakukan pendaftaran saat sudah dipanggil
+            </div>
+            <hr style="margin: 3px 0 3px 0;">
+            <div style="text-align:center;">
+                Semoga lekas sembuh.
+            </div>
+        </section>
+    </body>
+    <script>
+        const month = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember']
+
+        window.api.handle('antrianPrint', content => {
+            document.getElementById('antrian').innerText = content.antrian
+
+            const today = new Date()
+            const format = `${today.getDate()} ${month[today.getMonth()]} ${today.getFullYear()} | ${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}`
+            document.getElementById('tgl_jam').innerText = format
+
+            window.api.send('antrianReadyToPrint')
+        })
+    </script>
+</html>
