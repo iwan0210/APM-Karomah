@@ -33,10 +33,14 @@
             document.getElementById('antrian').innerText = content.antrian
 
             const today = new Date()
-            const format = `${today.getDate()} ${month[today.getMonth()]} ${today.getFullYear()} | ${today.getHours()}:${today.getMinutes()}:${today.getSeconds()}`
+            const format = `${n(today.getDate())} ${month[today.getMonth()]} ${today.getFullYear()} | ${n(today.getHours())}:${n(today.getMinutes())}:${n(today.getSeconds())}`
             document.getElementById('tgl_jam').innerText = format
 
             window.api.send('antrianReadyToPrint')
         })
+
+        function n(num, len = 2) {
+            return `${num}`.padStart(len, '0');
+        }
     </script>
 </html>

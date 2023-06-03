@@ -5,10 +5,10 @@ const mysql = require('mysql2')
 
 let win, antrianWorker, APMWorker
 
-const conn = mysql.createConnection({
+const pool = mysql.createPool({
     host: 'localhost',
     user: 'user',
-    password: 'pass',
+    password: 'password',
     database: 'db'
 })
 
@@ -105,29 +105,55 @@ ipcMain.on('APMReadyToPrint', (_) => {
 
 ipcMain.handle('mysql',
     (_, query) => new Promise((resolve, reject) => {
-        conn.connect(err => {
-            if(err) {
-                console.log(err)
+
+        pool.getConnection((err, conn) => {
+            if (err) {
+                conn.release()
                 reject(err)
             }
-        })
+            if (typeof query === "object") {
+                conn.query(query.sql, query.values, (err, rows, _) => {
+                    if (err) {
+                        console.log(err)
+                        conn.release()
+                        reject(err)
+                    }
+                    conn.release()
+                    resolve(rows)
+                })
+            }
 
-        if (typeof query === "object") {
-            conn.query(query.sql, query.values, (err, rows, _) => {
+            conn.query(query, (err, rows, _) => {
                 if (err) {
                     console.log(err)
+                    conn.release()
                     reject(err)
                 }
+                conn.release()
                 resolve(rows)
             })
-        }
-
-        conn.query(query, (err, rows, _) => {
-            if (err) {
-                console.log(err)
-                reject(err)
-            }
-            resolve(rows)
         })
+
+        // if (typeof query === "object") {
+        //     conn.query(query.sql, query.values, (err, rows, _) => {
+        //         if (err) {
+        //             console.log(err)
+        //             conn.end()
+        //             reject(err)
+        //         }
+        //         conn.end()
+        //         resolve(rows)
+        //     })
+        // }
+
+        // conn.query(query, (err, rows, _) => {
+        //     if (err) {
+        //         console.log(err)
+        //         conn.end()
+        //         reject(err)
+        //     }
+        //     conn.end()
+        //     resolve(rows)
+        // })
     })
 )

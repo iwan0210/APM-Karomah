@@ -1,4 +1,4 @@
-const socket = new WebSocket('ws://127.0.0.1:5000')
+const socket = new WebSocket('ws://192.168.120.100:8000')
 const hari = ['AKHAD', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU']
 let numState = ""
 let APMModal
@@ -40,7 +40,6 @@ const ambil = async () => {
         window.location = 'index.html'
     } catch (error) {
         document.getElementById('ambil').disabled = false
-        console.log(error)
         window.location = 'index.html'
     }
 }
@@ -50,7 +49,6 @@ const antrianTerakhir = async () => {
         const data = await window.api.mysql("SELECT jml_antrian FROM antrian_karomah WHERE nama='pendaftaran'")
         document.getElementById('jml_antrian').innerText = data[0].jml_antrian
     } catch (error) {
-        console.log(error)
         window.location = 'index.html'
     }
 }
@@ -122,7 +120,6 @@ const numInputSubmit = async () => {
         }
     } catch (error) {
         clearInput()
-        console.log(error)
         Swal.fire({
             icon: 'error',
             title: 'Error!',
@@ -206,13 +203,13 @@ const daftar = async () => {
         }
         const jamReg = `${n(today.getHours(), 2)}:${n(today.getMinutes(), 2)}:${n(today.getSeconds(), 2)}`
         const noRawat = await setNoRawat()
-        const tanggal = `${today.getFullYear()}-${n(today.getMonth(), 2)}-${n(today.getDate(), 2)}`
+        const tanggal = `${today.getFullYear()}-${n(today.getMonth() + 1, 2)}-${n(today.getDate(), 2)}`
         const alamatPJ = `${dataPasien.alamat}, ${dataPasien.nm_kel}, ${dataPasien.nm_kec}, ${dataPasien.nm_kab}`
         query = {
             sql: "INSERT INTO reg_periksa VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
             values: [noReg, noRawat, tanggal, jamReg, dokter, noRM, poli, dataPasien.namakeluarga, alamatPJ, dataPasien.keluarga, biayaReg, 'Belum', statusDaftar, 'Ralan', penjab, umur, statusUmur, 'Belum Bayar', statusPoli]
         }
-        //await window.api.mysql(query)
+        await window.api.mysql(query)
         window.api.send('APMPrint', {
             noRawat: noRawat,
             noAntri: noReg,
@@ -224,8 +221,8 @@ const daftar = async () => {
             dokter: namaDokter
         })
         document.getElementById("daftarButton").disabled = false
+        window.location = 'index.html'
     } catch (error) {
-        console.log(error)
         Swal.fire({
             icon: 'error',
             title: 'Error!',
@@ -261,11 +258,11 @@ const setNoRawat = () => {
             const today = new Date()
             const query = {
                 sql: "SELECT ifnull(MAX(CONVERT(RIGHT(no_rawat,6),signed)),0) as noRawat FROM reg_periksa WHERE tgl_registrasi = ?",
-                values: [`${today.getFullYear()}-${today.getMonth()}-${today.getDate()}`]
+                values: [`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`]
             }
             const data = await window.api.mysql(query)
             const noRawat = (!data.length) ? n(1, 6) : n((parseInt(data[0].noRawat) + 1), 6)
-            const nextNoRawat = `${today.getFullYear()}/${n(today.getMonth(), 2)}/${n(today.getDate(), 2)}/${noRawat}`
+            const nextNoRawat = `${today.getFullYear()}/${n(today.getMonth() + 1, 2)}/${n(today.getDate(), 2)}/${noRawat}`
             resolve(nextNoRawat)
         } catch (error) {
             reject(error)
@@ -338,7 +335,7 @@ Date.prototype.toDateInputValue = (function () {
 
 function n(num, len = 2) {
     return `${num}`.padStart(len, '0');
-  }
+}
 
 socket.onmessage = (e) => {
     const data = JSON.parse(e.data)
