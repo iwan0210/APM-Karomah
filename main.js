@@ -133,27 +133,5 @@ ipcMain.handle('mysql',
                 resolve(rows)
             })
         })
-
-        // if (typeof query === "object") {
-        //     conn.query(query.sql, query.values, (err, rows, _) => {
-        //         if (err) {
-        //             console.log(err)
-        //             conn.end()
-        //             reject(err)
-        //         }
-        //         conn.end()
-        //         resolve(rows)
-        //     })
-        // }
-
-        // conn.query(query, (err, rows, _) => {
-        //     if (err) {
-        //         console.log(err)
-        //         conn.end()
-        //         reject(err)
-        //     }
-        //     conn.end()
-        //     resolve(rows)
-        // })
     })
 )

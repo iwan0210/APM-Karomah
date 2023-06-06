@@ -24,18 +24,14 @@ if (document.getElementById('numInput')) {
 
 const ambil = async () => {
     try {
-        const antrian = parseInt(document.getElementById('jml_antrian').innerText) + 1
         document.getElementById('ambil').disabled = true
 
-        const query = {
-            sql: "UPDATE antrian_karomah SET jml_antrian = ? WHERE nama = 'pendaftaran'",
-            values: [antrian]
-        }
-        await window.api.mysql(query)
+        await window.api.mysql("UPDATE antrian_karomah SET jml_antrian = jml_antrian + 1 WHERE nama = 'pendaftaran'")
+        const data = await window.api.mysql("SELECT jml_antrian FROM antrian_karomah WHERE nama='pendaftaran'")
 
-        socket.send(JSON.stringify({ antrian: antrian }))
-        window.api.send('antrianPrint', { antrian: antrian })
-        document.getElementById('jml_antrian').innerText = antrian
+        socket.send(JSON.stringify({ antrian: data[0].jml_antrian }))
+        window.api.send('antrianPrint', { antrian: data[0].jml_antrian })
+        document.getElementById('jml_antrian').innerText = data[0].jml_antrian
 
         window.location = 'index.html'
     } catch (error) {
