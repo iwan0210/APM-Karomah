@@ -7,8 +7,8 @@ let win, antrianWorker, APMWorker
 
 const pool = mysql.createPool({
     host: 'localhost',
-    user: 'user',
-    password: 'password',
+    user: 'root',
+    password: '',
     database: 'db'
 })
 

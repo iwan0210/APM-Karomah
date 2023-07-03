@@ -11,9 +11,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "mysql2": "^3.3.0"
+    "mysql2": "^3.4.3"
   },
   "devDependencies": {
-    "electron": "^24.3.0"
+    "electron": "^25.2.0"
   }
 }
