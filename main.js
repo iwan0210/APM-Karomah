@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain } = require('electron')
+const { app, BrowserWindow, ipcMain, screen } = require('electron')
 const url = require('url')
 const path = require('path')
 const mysql = require('mysql2')
@@ -12,11 +12,12 @@ const pool = mysql.createPool({
     database: 'db'
 })
 
-const createWindow = () => {
+const createWindow = (width, height) => {
     win = new BrowserWindow({
-        width: 1280,
-        height: 800,
-        frame: false,
+        width: width,
+        height: height,
+        x: 0,
+        y: 0,
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
@@ -32,7 +33,6 @@ const createWindow = () => {
     }))
 
     win.setMenu(null)
-    win.maximize()
 
     antrianWorker = new BrowserWindow({
         width: 303,
@@ -80,7 +80,8 @@ const createWindow = () => {
 }
 
 app.whenReady().then(() => {
-    createWindow()
+    const { width, height } = screen.getPrimaryDisplay().workAreaSize
+    createWindow(width * 2 / 3, height)
 })
 
 app.on('window-all-closed', () => {
@@ -91,7 +92,7 @@ ipcMain.on('antrianPrint', (_, content) => {
     antrianWorker.webContents.send('antrianPrint', content)
 })
 
-ipcMain.on('antrianReadyToPrint', (_) => {
+ipcMain.on('antrianReadyToPrint', async (_) => {
     antrianWorker.webContents.print({ silent: true })
 })
 

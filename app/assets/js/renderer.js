@@ -22,16 +22,41 @@ if (document.getElementById('numInput')) {
     })
 }
 
-const ambil = async () => {
+const ambilAntrian = (type) => new Promise(async (resolve, reject) => {
+    try {
+        const dataLama = await window.api.mysql({
+            sql: "SELECT jml_antrian FROM antrian_karomah WHERE nama = ?",
+            values: [type]
+        })
+        await window.api.mysql({
+            sql: "UPDATE antrian_karomah SET jml_antrian = ? WHERE nama = ?",
+            values: [dataLama[0].jml_antrian + 1, type]
+        })
+        const data = await window.api.mysql({
+            sql: "SELECT jml_antrian FROM antrian_karomah WHERE nama = ?",
+            values: [type]
+        })
+        resolve(data[0].jml_antrian)
+    } catch (error) {
+        reject(error)
+    }
+})
+
+const ambil = async (type) => {
     try {
         document.getElementById('ambil').disabled = true
 
-        await window.api.mysql("UPDATE antrian_karomah SET jml_antrian = jml_antrian + 1 WHERE nama = 'pendaftaran'")
-        const data = await window.api.mysql("SELECT jml_antrian FROM antrian_karomah WHERE nama='pendaftaran'")
+        const data = await ambilAntrian(type)
 
-        socket.send(JSON.stringify({ antrian: data[0].jml_antrian }))
-        window.api.send('antrianPrint', { antrian: data[0].jml_antrian })
-        document.getElementById('jml_antrian').innerText = data[0].jml_antrian
+        socket.send(JSON.stringify({
+            antrian: data,
+            type: type
+        }))
+        window.api.send('antrianPrint', {
+            antrian: data,
+            type: type
+        })
+        document.getElementById('jml_antrian').innerText = data
 
         window.location = 'index.html'
     } catch (error) {
@@ -40,9 +65,13 @@ const ambil = async () => {
     }
 }
 
-const antrianTerakhir = async () => {
+const antrianTerakhir = async (type) => {
     try {
-        const data = await window.api.mysql("SELECT jml_antrian FROM antrian_karomah WHERE nama='pendaftaran'")
+        let query = {
+            sql: "SELECT jml_antrian FROM antrian_karomah WHERE nama = ?",
+            values: [type]
+        }
+        const data = await window.api.mysql(query)
         document.getElementById('jml_antrian').innerText = data[0].jml_antrian
     } catch (error) {
         window.location = 'index.html'
@@ -165,10 +194,10 @@ const daftar = async () => {
     const poli = document.getElementById('poli').value
     const dokter = document.getElementById('dokter').value
 
-    if(!noRM || !penjab || !poli || !dokter) {
+    if (!noRM || !penjab || !poli || !dokter) {
         return
     }
-    
+
     const namaPenjab = document.querySelector(`option[value='${penjab}']`).innerText
     const namaPoli = document.querySelector(`option[value='${poli}']`).innerText
     const namaDokter = document.querySelector(`option[value='${dokter}']`).innerText
@@ -192,7 +221,7 @@ const daftar = async () => {
         if (diff.getFullYear() - 1970 === 0) {
             umur = diff.getMonth()
             statusUmur = 'Bl'
-            if (!diff.getMonth()){
+            if (!diff.getMonth()) {
                 umur = diff.getDate() - 1
                 statusUmur = 'Hr'
             }
@@ -206,6 +235,11 @@ const daftar = async () => {
             values: [noReg, noRawat, tanggal, jamReg, dokter, noRM, poli, dataPasien.namakeluarga, alamatPJ, dataPasien.keluarga, biayaReg, 'Belum', statusDaftar, 'Ralan', penjab, umur, statusUmur, 'Belum Bayar', statusPoli]
         }
         await window.api.mysql(query)
+        const antriVerif = await ambilAntrian('verifikasi')
+        socket.send(JSON.stringify({
+            antrian: antriVerif,
+            type: 'verifikasi'
+        }))
         window.api.send('APMPrint', {
             noRawat: noRawat,
             noAntri: noReg,
@@ -214,7 +248,8 @@ const daftar = async () => {
             jk: dataPasien.jk,
             jenis: namaPenjab,
             poli: namaPoli,
-            dokter: namaDokter
+            dokter: namaDokter,
+            antriVerif: antriVerif
         })
         document.getElementById("daftarButton").disabled = false
         window.location = 'index.html'
