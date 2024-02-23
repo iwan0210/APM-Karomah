@@ -48,7 +48,7 @@ const checkinSubmit = async (input) => {
         const data = JSON.parse(window.atob(input))
         const code = data.noRujukan.charAt(12)
         let query = {
-            sql: "SELECT nohp, kodedokter, norawat, kodepoli, status FROM referensi_mobilejkn_bpjs WHERE nobooking = ?",
+            sql: "SELECT nohp, kodedokter, no_rawat, kodepoli, status FROM referensi_mobilejkn_bpjs WHERE nobooking = ?",
             values: [data.kodeBooking]
         }
         const dataMJKNResult = await window.api.mysql(query)
@@ -141,7 +141,7 @@ const checkinSubmit = async (input) => {
                 sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 values: [
                     resultSep.response.sep.noSep,
-                    dataMJKN.norawat,
+                    dataMJKN.no_rawat,
                     resultSep.response.sep.tglSep,
                     dataRujukan.response.rujukan.tglKunjungan,
                     resultSep.response.sep.noRujukan,
@@ -253,7 +253,7 @@ const checkinSubmit = async (input) => {
                 sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 values: [
                     resultSep.response.sep.noSep,
-                    dataMJKN.norawat,
+                    dataMJKN.no_rawat,
                     resultSep.response.sep.tglSep,
                     dataKontrol.tglrujukan,
                     resultSep.response.sep.noRujukan,
@@ -314,12 +314,12 @@ const checkinSubmit = async (input) => {
         await window.api.mysql(query)
         query = {
             sql: "INSERT INTO mutasi_berkas(no_rawat, status, dikirim) VALUES(?, ?, NOW())",
-            values: [dataMJKN.norawat, 'Sudah Dikirim']
+            values: [dataMJKN.no_rawat, 'Sudah Dikirim']
         }
         await window.api.mysql(query)
         query = {
             sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
-            values: [dataMJKN.norawat, 3]
+            values: [dataMJKN.no_rawat, 3]
         }
         await window.api.mysql(query)
 
