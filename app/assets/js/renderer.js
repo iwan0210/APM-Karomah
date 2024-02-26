@@ -839,7 +839,7 @@ const numpad = (num) => {
 }
 
 const customPad = (value) => {
-    if (num === 'delete') {
+    if (value === 'delete') {
         if (customState !== "") {
             customState = customState.slice(0, -1)
             reloadCustomInput()
