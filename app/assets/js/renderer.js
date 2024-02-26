@@ -180,7 +180,7 @@ const checkinSubmit = async (input) => {
 
         } else {
             query = {
-                sql: "SELECT bridging_sep.klsrawat, bridging_sep.no_rujukan, bridging_sep.jkel bridging_sep.no_sep, bridging_sep.asal_rujukan, bridging_sep.tglrujukan, bridging_sep.kdppkrujukan, bridging_sep.nmppkrujukan, bridging_sep.diagawal, bridging_sep.nmdiagnosaawal, bridging_sep.katarak, bridging_sep.lakalantas, bridging_sep.tglkll, bridging_sep.suplesi, bridging_sep.no_sep_suplesi, bridging_sep.kdprop, bridging_sep.nmprop, bridging_sep.kdkab, bridging_sep.nmkab, bridging_sep.kdkec, bridging_sep.nmkec from bridging_surat_kontrol_bpjs JOIN bridging_sep ON bridging_surat_kontrol_bpjs.no_sep = bridging_sep.no_sep WHERE bridging_surat_kontrol_bpjs.no_surat = ?",
+                sql: "SELECT bridging_sep.klsrawat, bridging_sep.no_rujukan, bridging_sep.jkel bridging_sep.no_sep, bridging_sep.asal_rujukan, bridging_sep.tglrujukan, bridging_sep.kdppkrujukan, bridging_sep.nmppkrujukan, bridging_sep.diagawal, bridging_sep.nmdiagnosaawal, bridging_sep.katarak, bridging_sep.lakalantas, bridging_sep.tglkkl, bridging_sep.suplesi, bridging_sep.no_sep_suplesi, bridging_sep.kdprop, bridging_sep.nmprop, bridging_sep.kdkab, bridging_sep.nmkab, bridging_sep.kdkec, bridging_sep.nmkec from bridging_surat_kontrol_bpjs JOIN bridging_sep ON bridging_surat_kontrol_bpjs.no_sep = bridging_sep.no_sep WHERE bridging_surat_kontrol_bpjs.no_surat = ?",
                 values: [data.noRujukan]
             }
             const dataKontrolResult = await window.api.mysql(query)
@@ -221,7 +221,7 @@ const checkinSubmit = async (input) => {
                             "lakaLantas": dataKontrol.lakalantas,
                             "noLP": "",
                             "penjamin": {
-                                "tglKejadian": (dataKontrol.lakalantas != 0) ? dataKontrol.tglkll : "",
+                                "tglKejadian": (dataKontrol.lakalantas != 0) ? dataKontrol.tglkkl : "",
                                 "keterangan": (dataKontrol.lakalantas != 0) ? "KLL" : "",
                                 "suplesi": {
                                     "suplesi": (dataKontrol.lakalantas != 0) ? "1" : "0",
@@ -282,7 +282,7 @@ const checkinSubmit = async (input) => {
                     "0. Tidak", "0. Tidak",
                     dataMJKN.nohp,
                     dataKontrol.katarak,
-                    (dataKontrol.lakalantas != 0) ? dataKontrol.tglkll : "0000-00-00",
+                    (dataKontrol.lakalantas != 0) ? dataKontrol.tglkkl : "0000-00-00",
                     (dataKontrol.lakalantas != 0) ? "KLL" : "",
                     (dataKontrol.lakalantas != 0) ? "1.Ya" : "0. Tidak",
                     (dataKontrol.lakalantas != 0) ? ((dataKontrol.no_sep_suplesi) ? dataKontrol.no_sep_suplesi : dataKontrol.no_sep) : "",
@@ -660,7 +660,7 @@ const customInputSubmit = async () => {
                             "lakaLantas": dataKontrol[0].lakalantas,
                             "noLP": "",
                             "penjamin": {
-                                "tglKejadian": (dataKontrol[0].lakalantas != 0) ? dataKontrol[0].tglkll : "",
+                                "tglKejadian": (dataKontrol[0].lakalantas != 0) ? dataKontrol[0].tglkkl : "",
                                 "keterangan": "",
                                 "suplesi": {
                                     "suplesi": (dataKontrol[0].lakalantas != 0) ? "1" : "0",
@@ -721,7 +721,7 @@ const customInputSubmit = async () => {
                     "0. Tidak", "0. Tidak",
                     dataKontrol[0].notelep,
                     dataKontrol[0].katarak,
-                    (dataKontrol[0].lakalantas != 0) ? dataKontrol[0].tglkll : "0000-00-00",
+                    (dataKontrol[0].lakalantas != 0) ? dataKontrol[0].tglkkl : "0000-00-00",
                     (dataKontrol[0].lakalantas != 0) ? "KLL" : "",
                     (dataKontrol[0].lakalantas != 0) ? "1.Ya" : "0. Tidak",
                     (dataKontrol[0].lakalantas != 0) ? ((dataKontrol[0].no_sep_suplesi) ? dataKontrol[0].no_sep_suplesi : dataKontrol.no_sep) : "",
