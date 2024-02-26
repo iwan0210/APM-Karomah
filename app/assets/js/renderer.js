@@ -561,7 +561,7 @@ const customInputSubmit = async () => {
 
             query = {
                 sql: "SELECT * FROM dokter join jadwal on jadwal.kd_dokter = dokter.kd_dokter join poliklinik on poliklinik.kd_poli = jadwal.kd_poli join maping_dokter_dpjpvclaim on maping_dokter_dpjpvclaim.kd_dokter = dokter.kd_dokter join maping_poli_bpjs on maping_poli_bpjs.kd_poli_rs = poliklinik.kd_poli WHERE maping_poli_bpjs.kd_poli_bpjs = ? and jadwal.hari_kerja = ?",
-                values: [dataRujukan.response.rujukan.poliRujukan.kode, hari[today.getDay()]]
+                values: [dataKontrol[0].kd_poli_bpjs, hari[today.getDay()]]
             }
             const dataTujuan = await window.api.mysql(query)
             const noReg = await setNoReg(dataTujuan[0].kd_poli, dataTujuan[0].kd_dokter)
