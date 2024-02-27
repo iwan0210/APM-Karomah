@@ -2,6 +2,7 @@ const socket = new WebSocket('ws://192.168.120.100:8000')
 const hari = ['AKHAD', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU']
 let numState = ""
 let customState = ""
+let APMProcess = false
 let APMModal
 
 if (document.getElementById('pendaftaran')) {
@@ -25,6 +26,9 @@ if (document.getElementById('numInput')) {
 
 if (document.getElementById('customInput')) {
     document.getElementById('customInput').addEventListener('keydown', e => {
+        if (APMProcess) {
+            return
+        }
         if (e.key === 'Enter') {
             customState = document.getElementById('customInput').value
             customInputSubmit()
@@ -35,6 +39,10 @@ if (document.getElementById('customInput')) {
 if (document.getElementById('checkin')) {
     document.getElementById('checkin').addEventListener('keydown', e => {
         if (e.key === 'Enter') {
+            if (APMProcess) {
+                document.getElementById('checkin').value = ""
+                return
+            }
             const submit = document.getElementById('checkin').value
             checkinSubmit(submit)
         }
@@ -42,6 +50,7 @@ if (document.getElementById('checkin')) {
 }
 
 const checkinSubmit = async (input) => {
+    APMProcess = true
     try {
         const currentDate = new Date().toJSON().slice(0, 10)
         document.getElementById('checkin').value = ""
@@ -70,7 +79,7 @@ const checkinSubmit = async (input) => {
                 noRujukan: data.noRujukan
             }
             const dataRujukan = await window.api.rujukan(req)
-            if (dataRujukan.metaData.message !== "OK") {
+            if (dataRujukan.metadata.message !== "OK") {
                 throw error
             }
             const dataSep = {
@@ -323,6 +332,7 @@ const checkinSubmit = async (input) => {
         }
         await window.api.mysql(query)
 
+        APMProcess = false
         Swal.fire({
             icon: 'success',
             title: 'Success',
@@ -332,6 +342,7 @@ const checkinSubmit = async (input) => {
             timer: 3000
         })
     } catch (error) {
+        APMProcess = false
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -348,6 +359,7 @@ const customInputSubmit = async () => {
     if (customState === "" || customState.length != 19) {
         return
     }
+    APMProcess = true
     try {
         let query
         const today = new Date()
@@ -358,7 +370,7 @@ const customInputSubmit = async () => {
                 noRujukan: customState
             }
             const dataRujukan = await window.api.rujukan(req)
-            if (dataRujukan.metaData.message !== "OK") {
+            if (dataRujukan.metadata.message !== "OK") {
                 throw error
             }
             query = {
@@ -756,7 +768,17 @@ const customInputSubmit = async () => {
             }
             await window.api.mysql(query)
         }
+        APMProcess = false
+        Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: 'Pendaftaran Berhasil',
+            timerProgressBar: true,
+            showConfirmButton: false,
+            timer: 3000
+        })
     } catch (error) {
+        APMProcess = false
         Swal.fire({
             icon: 'error',
             title: 'Error',
@@ -839,6 +861,9 @@ const numpad = (num) => {
 }
 
 const customPad = (value) => {
+    if (APMProcess) {
+        return
+    }
     if (value === 'delete') {
         if (customState !== "") {
             customState = customState.slice(0, -1)
