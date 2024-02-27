@@ -458,7 +458,7 @@ const customInputSubmit = async () => {
                             "pembiayaan": "",
                             "penanggungJawab": ""
                         },
-                        "noMR": data.norm,
+                        "noMR": dataPasien.no_rkm_medis,
                         "rujukan": {
                             "asalRujukan": (code == 'B') ? 2 : 1,
                             "tglRujukan": dataRujukan.response.rujukan.tglKunjungan,
