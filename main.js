@@ -45,6 +45,7 @@ const createWindow = (width, height) => {
     }))
 
     win.setMenu(null)
+    win.webContents.openDevTools()
 
     antrianWorker = new BrowserWindow({
         width: 303,
@@ -143,6 +144,7 @@ ipcMain.handle('mysql',
                     reject(err)
                 }
                 conn.release()
+                console.log(rows)
                 resolve(rows)
             })
         })
@@ -164,9 +166,11 @@ ipcMain.handle('rujukan',
             .then(res => {
                 const enctyptedData = res.data
                 const response = decrypt(enctyptedData.metaData, enctyptedData.response, timestamp)
+                console.log(response)
                 resolve(response)
             })
             .catch(err => {
+                console.log(err)
                 reject(err)
             })
     })
@@ -187,9 +191,11 @@ ipcMain.handle('sep',
             .then(res => {
                 const enctyptedData = res.data
                 const response = decrypt(enctyptedData.metaData, enctyptedData.response, timestamp)
+                console.log(response)
                 resolve(response)
             })
             .catch(err => {
+                console.log(err)
                 reject(err)
             })
     })
@@ -208,9 +214,11 @@ ipcMain.handle('taskId',
             data: data
         })
             .then(res => {
+                console.log(res.data)
                 resolve(res.data)
             })
             .catch(err => {
+                console.log(err)
                 reject(err)
             })
     })
@@ -229,9 +237,11 @@ ipcMain.handle('addAntrean',
             data: data
         })
             .then(res => {
+                console.log(res.data)
                 resolve(res.data)
             })
             .catch(err => {
+                console.log(err)
                 reject(err)
             })
     })
