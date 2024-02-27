@@ -412,7 +412,7 @@ const customInputSubmit = async () => {
             await window.api.mysql(query)
             query = {
                 sql: "SELECT DATE_ADD(CONCAT(?, ' ', ?), INTERVAL ? MINUTE) as estimate",
-                values: [tanggal, dataTujuan[0].jam_mulai, parseInt(noReg) * 10]
+                values: [tanggal, dataTujuan[0].jam_mulai.slice(0, -3), parseInt(noReg) * 10]
             }
             const estimate = await window.api.mysql(query)
             const dataAntrean = {
@@ -428,7 +428,7 @@ const customInputSubmit = async () => {
                 "tanggalperiksa": tanggal,
                 "kodedokter": dataTujuan[0].kd_dokter_bpjs,
                 "namadokter": dataTujuan[0].nm_dokter_bpjs,
-                "jampraktek": `${dataTujuan[0].jam_mulai}-${dataTujuan[0].jam_selesai}`,
+                "jampraktek": `${dataTujuan[0].jam_mulai.slice(0, -3)}-${dataTujuan[0].jam_selesai.slice(0, -3)}`,
                 "jeniskunjungan": (code == 'B') ? 4 : 1,
                 "nomorreferensi": customState,
                 "nomorantrean": `${dataTujuan[0].kd_poli}-${noReg}`,
@@ -603,7 +603,7 @@ const customInputSubmit = async () => {
             await window.api.mysql(query)
             query = {
                 sql: "SELECT DATE_ADD(CONCAT(?, ' ', ?), INTERVAL ? MINUTE) as estimate",
-                values: [tanggal, dataTujuan[0].jam_mulai, parseInt(noReg) * 10]
+                values: [tanggal, dataTujuan[0].jam_mulai.slice(0, -3), parseInt(noReg) * 10]
             }
             const estimate = await window.api.mysql(query)
             const dataAntrean = {
@@ -619,7 +619,7 @@ const customInputSubmit = async () => {
                 "tanggalperiksa": tanggal,
                 "kodedokter": dataTujuan[0].kd_dokter_bpjs,
                 "namadokter": dataTujuan[0].nm_dokter_bpjs,
-                "jampraktek": `${dataTujuan[0].jam_mulai}-${dataTujuan[0].jam_selesai}`,
+                "jampraktek": `${dataTujuan[0].jam_mulai.slice(0, -3)}-${dataTujuan[0].jam_selesai.slice(0, -3)}`,
                 "jeniskunjungan": (code == 'B') ? 4 : 1,
                 "nomorreferensi": customState,
                 "nomorantrean": `${dataTujuan[0].kd_poli}-${noReg}`,
