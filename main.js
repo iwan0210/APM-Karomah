@@ -137,8 +137,6 @@ ipcMain.handle('mysql',
                         reject(err)
                     }
                     conn.release()
-                    console.log(rows)
-                    console.log('')
                     resolve(rows)
                 })
             }
@@ -150,8 +148,6 @@ ipcMain.handle('mysql',
                     reject(err)
                 }
                 conn.release()
-                console.log(rows)
-                console.log('')
                 resolve(rows)
             })
         })
