@@ -441,7 +441,7 @@ const customInputSubmit = async () => {
                 "keterangan": "Peserta harap 30 menit lebih awal guna pencatatan administrasi."
             }
             const resAntrean = await window.api.addAntrean(dataAntrean)
-            if (resAntrean.metadata.code != 200 || resAntrean.metadata.code != 208) {
+            if (![200, 208].includes(resAntrean.metadata.code)) {
                 throw error
             }
 
@@ -632,7 +632,7 @@ const customInputSubmit = async () => {
                 "keterangan": "Peserta harap 30 menit lebih awal guna pencatatan administrasi."
             }
             const resAntrean = await window.api.addAntrean(dataAntrean)
-            if (resAntrean.metadata.code != 200 || resAntrean.metadata.code != 208) {
+            if (![200, 208].includes(resAntrean.metadata.code)) {
                 throw error
             }
 
@@ -1061,7 +1061,7 @@ const daftar = async () => {
             "keterangan": "Peserta harap 30 menit lebih awal guna pencatatan administrasi."
         }
         const resAntrean = await window.api.addAntrean(dataAntrean)
-        if (resAntrean.metadata.code != 200 || resAntrean.metadata.code != 208) {
+        if (![200, 208].includes(resAntrean.metadata.code)) {
             throw error
         }
         query = {
