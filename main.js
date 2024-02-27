@@ -250,6 +250,7 @@ ipcMain.handle('addAntrean',
         })
             .then(res => {
                 console.log("#### ws add antrean ####")
+                console.log(data)
                 console.log(res.data)
                 console.log('')
                 resolve(res.data)
