@@ -120,6 +120,9 @@ ipcMain.on('APMReadyToPrint', (_) => {
 ipcMain.handle('mysql',
     (_, query) => new Promise((resolve, reject) => {
 
+        console.log("#### sql query ####")
+        console.log(query)
+
         pool.getConnection((err, conn) => {
             if (err) {
                 conn.release()
@@ -133,6 +136,8 @@ ipcMain.handle('mysql',
                         reject(err)
                     }
                     conn.release()
+                    console.log(rows)
+                    console.log('')
                     resolve(rows)
                 })
             }
@@ -145,6 +150,7 @@ ipcMain.handle('mysql',
                 }
                 conn.release()
                 console.log(rows)
+                console.log('')
                 resolve(rows)
             })
         })
@@ -166,7 +172,9 @@ ipcMain.handle('rujukan',
             .then(res => {
                 const enctyptedData = res.data
                 const response = decrypt(enctyptedData.metaData, enctyptedData.response, timestamp)
+                console.log("#### ws cek rujukan ####")
                 console.log(response)
+                console.log('')
                 resolve(response)
             })
             .catch(err => {
@@ -191,7 +199,9 @@ ipcMain.handle('sep',
             .then(res => {
                 const enctyptedData = res.data
                 const response = decrypt(enctyptedData.metaData, enctyptedData.response, timestamp)
+                console.log("#### ws add sep ####")
                 console.log(response)
+                console.log('')
                 resolve(response)
             })
             .catch(err => {
@@ -214,7 +224,9 @@ ipcMain.handle('taskId',
             data: data
         })
             .then(res => {
+                console.log("#### ws add TaskId ####")
                 console.log(res.data)
+                console.log('')
                 resolve(res.data)
             })
             .catch(err => {
@@ -237,7 +249,9 @@ ipcMain.handle('addAntrean',
             data: data
         })
             .then(res => {
+                console.log("#### ws add antrean ####")
                 console.log(res.data)
+                console.log('')
                 resolve(res.data)
             })
             .catch(err => {
