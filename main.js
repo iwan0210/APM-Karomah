@@ -200,6 +200,7 @@ ipcMain.handle('sep',
                 const enctyptedData = res.data
                 const response = decrypt(enctyptedData.metaData, enctyptedData.response, timestamp)
                 console.log("#### ws add sep ####")
+                console.log(data)
                 console.log(response)
                 console.log('')
                 resolve(response)
