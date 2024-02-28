@@ -388,7 +388,7 @@ const customInputSubmit = async () => {
             const statusDaftar = await setSttsDaftar(dataPasien.no_rkm_medis)
             const biayaReg = await setBiayaReg(dataTujuan[0].kd_poli, setSttsDaftar)
             const statusPoli = await setStatusPoli(dataPasien.no_rkm_medis, dataTujuan[0].kd_poli, dataTujuan[0].kd_dokter)
-            const birth = dataPasien.tgl_lahir
+            const birth = new Date(dataPasien.tgl_lahir)
             const diff = new Date(today.getTime() - birth.getTime())
             let umur = diff.getFullYear() - 1970
             let statusUmur = 'Th'
@@ -580,7 +580,7 @@ const customInputSubmit = async () => {
             const statusDaftar = await setSttsDaftar(dataKontrol[0].no_rkm_medis)
             const biayaReg = await setBiayaReg(dataTujuan[0].kd_poli, setSttsDaftar)
             const statusPoli = await setStatusPoli(dataKontrol[0].no_rkm_medis, dataTujuan[0].kd_poli, dataTujuan[0].kd_dokter)
-            const birth = dataKontrol[0].tgl_lahir
+            const birth = new Date(dataKontrol[0].tgl_lahir)
             const diff = new Date(today.getTime() - birth.getTime())
             let umur = diff.getFullYear() - 1970
             let statusUmur = 'Th'
@@ -998,7 +998,7 @@ const daftar = async () => {
         const statusDaftar = await setSttsDaftar(noRM)
         const biayaReg = await setBiayaReg(poli, setSttsDaftar)
         const statusPoli = await setStatusPoli(noRM, poli, dokter)
-        const birth = dataPasien.tgl_lahir
+        const birth = new Date(dataPasien.tgl_lahir)
         const today = new Date()
         const diff = new Date(today.getTime() - birth.getTime())
         let umur = diff.getFullYear() - 1970
