@@ -620,7 +620,7 @@ const customInputSubmit = async () => {
                 "kodedokter": dataTujuan[0].kd_dokter_bpjs,
                 "namadokter": dataTujuan[0].nm_dokter_bpjs,
                 "jampraktek": `${dataTujuan[0].jam_mulai.slice(0, -3)}-${dataTujuan[0].jam_selesai.slice(0, -3)}`,
-                "jeniskunjungan": (code == 'B') ? 4 : 1,
+                "jeniskunjungan": 3,
                 "nomorreferensi": customState,
                 "nomorantrean": `${dataTujuan[0].kd_poli}-${noReg}`,
                 "angkaantrean": parseInt(noReg),
