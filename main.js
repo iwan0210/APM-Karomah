@@ -186,12 +186,12 @@ ipcMain.handle('sep',
         const url = BPJS_BASE_URL + 'vclaim-rest/SEP/2.0/insert'
         const timestamp = Math.floor(Date.now() / 1000)
         const signature = genSignature(timestamp)
-        const header = genVClaimHeader(signature, timestamp)
+        const header = genVClaimHeader2(signature, timestamp)
         axios({
             method: 'post',
             url: url,
             headers: header,
-            data: data
+            data: JSON.stringify(data)
         })
             .then(res => {
                 const enctyptedData = res.data
@@ -275,6 +275,16 @@ const genHeader = (signature, timestamp) => {
 const genVClaimHeader = (signature, timestamp) => {
     return {
         'Content-Type': 'application/json',
+        'X-cons-id': BPJS_CONST_ID,
+        'X-timestamp': timestamp,
+        'X-signature': signature,
+        'user_key': BPJS_USER_KEY_VCLAIM
+    }
+}
+
+const genVClaimHeader2 = (signature, timestamp) => {
+    return {
+        'Content-Type': 'application/x-www-form-urlencoded',
         'X-cons-id': BPJS_CONST_ID,
         'X-timestamp': timestamp,
         'X-signature': signature,

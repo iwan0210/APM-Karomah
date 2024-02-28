@@ -4,10 +4,10 @@ let numState = ""
 let customState = ""
 let APMProcess = false
 let APMModal
-
+ 
 if (document.getElementById('pendaftaran')) {
     APMModal = new bootstrap.Modal(document.getElementById('pendaftaran'))
-
+ 
     APMModal._element.addEventListener('hidden.bs.modal', _ => {
         numState = ""
         reloadNumInput()
@@ -23,7 +23,7 @@ if (document.getElementById('numInput')) {
         }
     })
 }
-
+ 
 if (document.getElementById('customInput')) {
     document.getElementById('customInput').addEventListener('keydown', e => {
         if (APMProcess) {
@@ -35,7 +35,7 @@ if (document.getElementById('customInput')) {
         }
     })
 }
-
+ 
 if (document.getElementById('checkin')) {
     document.getElementById('checkin').addEventListener('keydown', e => {
         if (e.key === 'Enter') {
@@ -48,7 +48,7 @@ if (document.getElementById('checkin')) {
         }
     })
 }
-
+ 
 const checkinSubmit = async (input) => {
     APMProcess = true
     try {
@@ -97,12 +97,12 @@ const checkinSubmit = async (input) => {
                         },
                         "noMR": data.norm,
                         "rujukan": {
-                            "asalRujukan": (code == 'B') ? 2 : 1,
+                            "asalRujukan": (code == 'B') ? "2" : "1",
                             "tglRujukan": dataRujukan.response.rujukan.tglKunjungan,
                             "noRujukan": data.noRujukan,
                             "ppkRujukan": dataRujukan.response.rujukan.provPerujuk.kode
                         },
-                        "catatan": "",
+                        "catatan": "-",
                         "diagAwal": dataRujukan.response.rujukan.diagnosa.kode,
                         "poli": {
                             "tujuan": dataRujukan.response.rujukan.poliRujukan.kode,
@@ -186,7 +186,7 @@ const checkinSubmit = async (input) => {
                 ]
             }
             await window.api.mysql(query)
-
+ 
         } else {
             query = {
                 sql: "SELECT bridging_sep.klsrawat, bridging_sep.no_rujukan, bridging_sep.jkel bridging_sep.no_sep, bridging_sep.asal_rujukan, bridging_sep.tglrujukan, bridging_sep.kdppkrujukan, bridging_sep.nmppkrujukan, bridging_sep.diagawal, bridging_sep.nmdiagnosaawal, bridging_sep.katarak, bridging_sep.lakalantas, bridging_sep.tglkkl, bridging_sep.suplesi, bridging_sep.no_sep_suplesi, bridging_sep.kdprop, bridging_sep.nmprop, bridging_sep.kdkab, bridging_sep.nmkab, bridging_sep.kdkec, bridging_sep.nmkec from bridging_surat_kontrol_bpjs JOIN bridging_sep ON bridging_surat_kontrol_bpjs.no_sep = bridging_sep.no_sep WHERE bridging_surat_kontrol_bpjs.no_surat = ?",
@@ -209,12 +209,12 @@ const checkinSubmit = async (input) => {
                         },
                         "noMR": data.norm,
                         "rujukan": {
-                            "asalRujukan": dataKontrol.asal_rujukan.charAt(0),
+						"asalRujukan": `${dataKontrol.asal_rujukan.charAt(0)}`,
                             "tglRujukan": dataKontrol.tglrujukan,
                             "noRujukan": (dataKontrol.no_rujukan.charAt(12) == 'K') ? dataKontrol.no_sep : dataKontrol.no_rujukan,
                             "ppkRujukan": dataKontrol.kdppkrujukan
                         },
-                        "catatan": "",
+                        "catatan": "-",
                         "diagAwal": dataKontrol.diagawal,
                         "poli": {
                             "tujuan": dataMJKN.kodepoli,
@@ -314,7 +314,7 @@ const checkinSubmit = async (input) => {
             }
             await window.api.mysql(query)
         }
-
+ 
         await taskId3(data.kodeBooking)
         query = {
             sql: "UPDATE referensi_mobilejkn_bpjs SET status = 'Checkin', validasi = NOW() WHERE nobooking = ?",
@@ -331,7 +331,7 @@ const checkinSubmit = async (input) => {
             values: [dataMJKN.no_rawat, 3]
         }
         await window.api.mysql(query)
-
+ 
         APMProcess = false
         Swal.fire({
             icon: 'success',
@@ -352,9 +352,9 @@ const checkinSubmit = async (input) => {
             timer: 3000
         })
     }
-
+ 
 }
-
+ 
 const customInputSubmit = async () => {
     if (customState === "" || customState.length != 19) {
         return
@@ -404,7 +404,7 @@ const customInputSubmit = async () => {
             const noRawat = await setNoRawat()
             const tanggal = today.toDateInputValue()
             const alamatPJ = `${dataPasien.alamat}, ${dataPasien.nm_kel}, ${dataPasien.nm_kec}, ${dataPasien.nm_kab}`
-            
+ 
             query = {
                 sql: "INSERT INTO reg_periksa VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 values: [noReg, noRawat, tanggal, jamReg, dataTujuan[0].kd_dokter, dataPasien.no_rkm_medis, dataTujuan[0].kd_poli, dataPasien.namakeluarga, alamatPJ, dataPasien.keluarga, biayaReg, 'Belum', statusDaftar, 'Ralan', 'A65', umur, statusUmur, 'Belum Bayar', statusPoli]
@@ -444,7 +444,7 @@ const customInputSubmit = async () => {
             if (![200, 208].includes(resAntrean.metadata.code)) {
                 throw error
             }
-
+ 
             const dataSep = {
                 "request": {
                     "t_sep": {
@@ -460,12 +460,12 @@ const customInputSubmit = async () => {
                         },
                         "noMR": dataPasien.no_rkm_medis,
                         "rujukan": {
-                            "asalRujukan": (code == 'B') ? 2 : 1,
+                            "asalRujukan": (code == 'B') ? "2" : "1",
                             "tglRujukan": dataRujukan.response.rujukan.tglKunjungan,
                             "noRujukan": dataRujukan.response.rujukan.noKunjungan,
                             "ppkRujukan": dataRujukan.response.rujukan.provPerujuk.kode
                         },
-                        "catatan": "",
+                        "catatan": "-",
                         "diagAwal": dataRujukan.response.rujukan.diagnosa.kode,
                         "poli": {
                             "tujuan": dataRujukan.response.rujukan.poliRujukan.kode,
@@ -549,7 +549,7 @@ const customInputSubmit = async () => {
                 ]
             }
             await window.api.mysql(query)
-
+ 
             await taskId3(noRawat)
             query = {
                 sql: "INSERT INTO mutasi_berkas(no_rawat, status, dikirim) VALUES(?, ?, NOW())",
@@ -570,7 +570,7 @@ const customInputSubmit = async () => {
             if (dataKontrol.length <= 0) {
                 throw error
             } 
-
+ 
             query = {
                 sql: "SELECT * FROM dokter join jadwal on jadwal.kd_dokter = dokter.kd_dokter join poliklinik on poliklinik.kd_poli = jadwal.kd_poli join maping_dokter_dpjpvclaim on maping_dokter_dpjpvclaim.kd_dokter = dokter.kd_dokter join maping_poli_bpjs on maping_poli_bpjs.kd_poli_rs = poliklinik.kd_poli WHERE maping_poli_bpjs.kd_poli_bpjs = ? and jadwal.hari_kerja = ?",
                 values: [dataKontrol[0].kd_poli_bpjs, hari[today.getDay()]]
@@ -635,7 +635,7 @@ const customInputSubmit = async () => {
             if (![200, 208].includes(resAntrean.metadata.code)) {
                 throw error
             }
-
+ 
             const dataSep = {
                 "request": {
                     "t_sep": {
@@ -651,12 +651,12 @@ const customInputSubmit = async () => {
                         },
                         "noMR": dataKontrol[0].no_rkm_medis,
                         "rujukan": {
-                            "asalRujukan": dataKontrol[0].asal_rujukan.charAt(0),
+                            "asalRujukan": `${dataKontrol[0].asal_rujukan.charAt(0)}`,
                             "tglRujukan": dataKontrol[0].tglrujukan,
                             "noRujukan": (dataKontrol[0].no_rujukan.charAt(12) == "K") ? dataKontrol[0].no_sep : dataKontrol[0].no_rujukan,
                             "ppkRujukan": dataKontrol[0].kdppkrujukan
                         },
-                        "catatan": "",
+                        "catatan": "-",
                         "diagAwal": dataKontrol[0].diagawal,
                         "poli": {
                             "tujuan": dataKontrol[0].kd_poli_bpjs,
@@ -755,7 +755,7 @@ const customInputSubmit = async () => {
                 ]
             }
             await window.api.mysql(query)
-
+ 
             await taskId3(noRawat)
             query = {
                 sql: "INSERT INTO mutasi_berkas(no_rawat, status, dikirim) VALUES(?, ?, NOW())",
@@ -789,7 +789,7 @@ const customInputSubmit = async () => {
         })
     }
 }
-
+ 
 const ambilAntrian = (type) => new Promise(async (resolve, reject) => {
     try {
         const dataLama = await window.api.mysql({
@@ -809,13 +809,13 @@ const ambilAntrian = (type) => new Promise(async (resolve, reject) => {
         reject(error)
     }
 })
-
+ 
 const ambil = async (type) => {
     try {
         document.getElementById('ambil').disabled = true
-
+ 
         const data = await ambilAntrian(type)
-
+ 
         socket.send(JSON.stringify({
             antrian: data,
             type: type
@@ -825,14 +825,14 @@ const ambil = async (type) => {
             type: type
         })
         document.getElementById('jml_antrian').innerText = data
-
+ 
         window.location = 'index.html'
     } catch (error) {
         document.getElementById('ambil').disabled = false
         window.location = 'index.html'
     }
 }
-
+ 
 const antrianTerakhir = async (type) => {
     try {
         let query = {
@@ -845,7 +845,7 @@ const antrianTerakhir = async (type) => {
         window.location = 'index.html'
     }
 }
-
+ 
 const numpad = (num) => {
     if (num === 'delete') {
         if (numState !== "") {
@@ -859,7 +859,7 @@ const numpad = (num) => {
         reloadNumInput()
     }
 }
-
+ 
 const customPad = (value) => {
     if (APMProcess) {
         return
@@ -876,7 +876,7 @@ const customPad = (value) => {
         reloadCustomInput()
     }
 }
-
+ 
 const numInputSubmit = async () => {
     if (numState === "") {
         return
@@ -905,7 +905,7 @@ const numInputSubmit = async () => {
             document.getElementById('nama').value = dataPasien[0].nm_pasien
             document.getElementById('alamat').value = dataPasien[0].alamat
             document.getElementById('tanggal').value = new Date().toDateInputValue()
-
+ 
             const dataPenjab = await window.api.mysql("SELECT kd_pj, png_jawab FROM penjab WHERE status='1' AND kd_pj != 'A65'")
             dataPenjab.forEach(arr => {
                 const option = document.createElement('option')
@@ -913,7 +913,7 @@ const numInputSubmit = async () => {
                 option.innerText = arr.png_jawab
                 document.getElementById('penjamin').appendChild(option)
             })
-
+ 
             const today = new Date()
             query = {
                 sql: "SELECT poliklinik.kd_poli, poliklinik.nm_poli FROM poliklinik JOIN jadwal ON poliklinik.kd_poli = jadwal.kd_poli WHERE poliklinik.status = '1' AND jadwal.hari_kerja = ? AND jadwal.kuota > 0",
@@ -942,7 +942,7 @@ const numInputSubmit = async () => {
         })
     }
 }
-
+ 
 const getDokter = async (poli) => {
     try {
         const today = new Date()
@@ -972,17 +972,17 @@ const getDokter = async (poli) => {
         })
     }
 }
-
+ 
 const daftar = async () => {
     const noRM = document.getElementById('noRM').value
     const penjab = document.getElementById('penjamin').value
     const poli = document.getElementById('poli').value
     const dokter = document.getElementById('dokter').value
-
+ 
     if (!noRM || !penjab || !poli || !dokter) {
         return
     }
-
+ 
     const namaPenjab = document.querySelector(`option[value='${penjab}']`).innerText
     const namaPoli = document.querySelector(`option[value='${poli}']`).innerText
     const namaDokter = document.querySelector(`option[value='${dokter}']`).innerText
@@ -1111,7 +1111,7 @@ const daftar = async () => {
         })
     }
 }
-
+ 
 const taskId3 = async(booking) => {
     const dataTaskId = {
         "kodebooking": booking,
@@ -1120,7 +1120,7 @@ const taskId3 = async(booking) => {
     }
     return await window.api.taskId(dataTaskId)
 } 
-
+ 
 const setNoReg = (poli, dokter) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -1136,7 +1136,7 @@ const setNoReg = (poli, dokter) => {
         }
     })
 }
-
+ 
 const setNoRawat = () => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -1154,7 +1154,7 @@ const setNoRawat = () => {
         }
     })
 }
-
+ 
 const setSttsDaftar = (noRM) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -1170,7 +1170,7 @@ const setSttsDaftar = (noRM) => {
         }
     })
 }
-
+ 
 const setBiayaReg = (poli, sttsDaftar) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -1186,7 +1186,7 @@ const setBiayaReg = (poli, sttsDaftar) => {
         }
     })
 }
-
+ 
 const setStatusPoli = (noRM, poli, dokter) => {
     return new Promise(async (resolve, reject) => {
         try {
@@ -1202,32 +1202,32 @@ const setStatusPoli = (noRM, poli, dokter) => {
         }
     })
 }
-
+ 
 const clearInput = () => {
     numState = ""
     customState = ""
     reloadNumInput()
     reloadCustomInput()
 }
-
+ 
 const reloadNumInput = () => {
     document.getElementById('numInput').value = numState
 }
-
+ 
 const reloadCustomInput = () => {
     document.getElementById('customInput').value = customState
 }
-
+ 
 Date.prototype.toDateInputValue = (function () {
     const local = new Date(this);
     local.setMinutes(this.getMinutes() - this.getTimezoneOffset());
     return local.toJSON().slice(0, 10);
 })
-
+ 
 function n(num, len = 2) {
     return `${num}`.padStart(len, '0');
 }
-
+ 
 socket.onmessage = (e) => {
     const data = JSON.parse(e.data)
     if (data.type == 'reloadAntrian') {
