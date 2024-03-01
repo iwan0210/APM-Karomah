@@ -328,7 +328,7 @@ const checkinSubmit = async (input) => {
         await window.api.mysql(query)
         query = {
             sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
-            values: [dataMJKN.no_rawat, 3]
+            values: [dataMJKN.no_rawat, '3']
         }
         await window.api.mysql(query)
  
@@ -558,7 +558,7 @@ const customInputSubmit = async () => {
             await window.api.mysql(query)
             query = {
                 sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
-                values: [noRawat, 3]
+                values: [noRawat, '3']
             }
             await window.api.mysql(query)
         } else {
@@ -764,7 +764,7 @@ const customInputSubmit = async () => {
             await window.api.mysql(query)
             query = {
                 sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
-                values: [noRawat, 3]
+                values: [noRawat, '3']
             }
             await window.api.mysql(query)
         }
@@ -1077,7 +1077,7 @@ const daftar = async () => {
         await window.api.mysql(query)
         query = {
             sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
-            values: [noRawat, 3]
+            values: [noRawat, '3']
         }
         await window.api.mysql(query)
         const antriVerif = await ambilAntrian('verifikasi')
