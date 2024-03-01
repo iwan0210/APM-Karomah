@@ -180,7 +180,7 @@ const checkinSubmit = async (input) => {
                     "0. Tidak", "0000-00-00", "", "0. Tidak", "", "", "", "", "", "", "", "",
                     dataMJKN.kodedokter,
                     data.namaDokter,
-                    0, "", "", "",
+                    '0', "", "", "",
                     dataMJKN.kodedokter,
                     data.namaDokter
                 ]
@@ -543,7 +543,7 @@ const customInputSubmit = async () => {
                     "0. Tidak", "0000-00-00", "", "0. Tidak", "", "", "", "", "", "", "", "",
                     dataTujuan[0].kd_dokter_bpjs,
                     dataTujuan[0].kd_dokter_bpjs,
-                    0, "", "", "",
+                    '0', "", "", "",
                     dataTujuan[0].kd_dokter_bpjs,
                     dataTujuan[0].kd_dokter_bpjs
                 ]
