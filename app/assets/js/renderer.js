@@ -1205,8 +1205,11 @@ const setStatusPoli = (noRM, poli, dokter) => {
  
 const clearInput = () => {
     numState = ""
-    customState = ""
     reloadNumInput()
+}
+
+const clearCustomInput = () => {
+    customState = ""
     reloadCustomInput()
 }
  
