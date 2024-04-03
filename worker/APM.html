@@ -22,11 +22,6 @@
                     <td>:</td>
                     <td id="noRawat">2023/05/09/000008</td>
                 </tr>
-                <tr>
-                    <td>No Antrian</td>
-                    <td>:</td>
-                    <td id="noAntri">001</td>
-                </tr>
                 <tr style="vertical-align: top;">
                     <td>Nama</td>
                     <td>:</td>
@@ -58,11 +53,6 @@
                     <td id="dokter">dr. guntur Susetyo, Sp.M</td>
                 </tr>
             </table>
-            <br>
-            <div style="text-align:center;">
-                <span style="font-size: medium;">Antrian Verifikasi</span><br>
-                <span id="antriVerif" style="font-weight: bold;font-size:50px;vertical-align: top;">B1</span>
-            </div>
             <hr style="margin: 3px 0 3px 0;">
             <div style="text-align:center;">
                 Terima kasih atas kepercayaan Anda
@@ -82,14 +72,12 @@
 
                 document.getElementById('tanggal').innerText = format
                 document.getElementById('noRawat').innerText = content.noRawat
-                document.getElementById('noAntri').innerText = content.noAntri
                 document.getElementById('nama').innerText = content.nama
                 document.getElementById('noRM').innerText = content.noRM
                 document.getElementById('jk').innerText = (content.jk === 'L') ? 'Laki-laki' : 'Perempuan'
                 document.getElementById('jenis').innerText = content.jenis
                 document.getElementById('poli').innerText = content.poli
                 document.getElementById('dokter').innerText = content.dokter
-                document.getElementById('antriVerif').innerText = 'B' + content.antriVerif
 
                 window.api.send('APMReadyToPrint')
             })

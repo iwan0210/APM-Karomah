@@ -4,6 +4,9 @@ let numState = ""
 let customState = ""
 let APMProcess = false
 let APMModal
+let BPJSModal
+
+const sleep = ms => new Promise(r => setTimeout(r, ms));
  
 if (document.getElementById('pendaftaran')) {
     APMModal = new bootstrap.Modal(document.getElementById('pendaftaran'))
@@ -15,8 +18,26 @@ if (document.getElementById('pendaftaran')) {
         document.getElementById('numInput').setAttribute('onblur', 'this.focus();')
     })
 }
+if (document.getElementById('pendaftaranBPJS')) {
+    BPJSModal = new bootstrap.Modal(document.getElementById('pendaftaranBPJS'))
+
+    BPJSModal._element.addEventListener('hidden.bs.modal', _ => {
+        document.getElementById('customInput').focus()
+        document.getElementById('customInput').setAttribute('onblur', 'this.focus();')
+    })
+}
 if (document.getElementById('numInput')) {
     document.getElementById('numInput').addEventListener('keydown', e => {
+        e.preventDefault()
+        if (APMProcess) {
+            return
+        }
+        if (!isNaN(e.key)) { 
+            numpad(e.key)
+        }
+        if (e.key === 'Backspace') {
+            numpad('delete')
+        }
         if (e.key === 'Enter') {
             numState = document.getElementById('numInput').value
             numInputSubmit()
@@ -26,8 +47,15 @@ if (document.getElementById('numInput')) {
  
 if (document.getElementById('customInput')) {
     document.getElementById('customInput').addEventListener('keydown', e => {
+        e.preventDefault()
         if (APMProcess) {
             return
+        }
+        if (!isNaN(e.key)) { 
+            customPad(e.key)
+        }
+        if (e.key === 'Backspace') {
+            customPad('delete')
         }
         if (e.key === 'Enter') {
             customState = document.getElementById('customInput').value
@@ -51,6 +79,16 @@ if (document.getElementById('checkin')) {
  
 const checkinSubmit = async (input) => {
     APMProcess = true
+    Swal.fire({
+        icon: 'info',
+        title: 'Loading',
+        text: 'Silahkan tunggu sebentar',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading()
+        }
+    })
     try {
         const currentDate = new Date().toJSON().slice(0, 10)
         document.getElementById('checkin').value = ""
@@ -61,17 +99,10 @@ const checkinSubmit = async (input) => {
             values: [data.kodeBooking]
         }
         const dataMJKNResult = await window.api.mysql(query)
+        if (dataMJKNResult.length <= 0) throw new Error("booking MJKN tidak ditemukan")
         const dataMJKN = dataMJKNResult[0]
         if (dataMJKN.status != 'Belum') {
-            Swal.fire({
-                icon: 'error',
-                title: 'Gagal',
-                text: 'Sudah Checkin atau batal periksa',
-                timerProgressBar: true,
-                showConfirmButton: false,
-                timer: 3000
-            })
-            return
+            throw new Error("Sudah Checkin atau batal periksa")
         }
         if (['P', 'Y', 'B'].includes(code)) {
             const req = {
@@ -80,7 +111,7 @@ const checkinSubmit = async (input) => {
             }
             const dataRujukan = await window.api.rujukan(req)
             if (dataRujukan.metadata.message !== "OK") {
-                throw error
+                throw new Error("rujukan tidak ditemukan")
             }
             const dataSep = {
                 "request": {
@@ -333,6 +364,8 @@ const checkinSubmit = async (input) => {
         await window.api.mysql(query)
  
         APMProcess = false
+        await sleep(2000)
+        Swal.close()
         Swal.fire({
             icon: 'success',
             title: 'Success',
@@ -343,10 +376,12 @@ const checkinSubmit = async (input) => {
         })
     } catch (error) {
         APMProcess = false
+        await sleep(2000)
+        Swal.close()
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Checkin Gagal',
+            text: error.message,
             timerProgressBar: true,
             showConfirmButton: false,
             timer: 3000
@@ -354,12 +389,121 @@ const checkinSubmit = async (input) => {
     }
  
 }
- 
+
 const customInputSubmit = async () => {
+    if (customState === "" || customState.length != 19) {
+        return 
+    }
+    APMProcess = true
+    Swal.fire({
+        icon: 'info',
+        title: 'Loading',
+        text: 'Silahkan tunggu sebentar',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading()
+        }
+    })
+    const today = new Date()
+    const formNoRM = document.getElementById("noRM")
+    const formNama = document.getElementById("nama")
+    const formAlamat = document.getElementById("alamat")
+    const formPoli = document.getElementById("poli")
+    const formDokter = document.getElementById("dokter")
+    try {
+        document.getElementById('customInput').removeAttribute('onblur')
+        let query
+        const code = customState.charAt(12)
+        if (['P', 'Y', 'B'].includes(code)) {
+            const req = {
+                type: (code == 'B') ? 2 : 1,
+                noRujukan: customState
+            }
+            const dataRujukan = await window.api.rujukan(req)
+            if (dataRujukan.metadata.message !== "OK") {
+                throw new Error("Rujukan Tidak ditemukan")
+            }
+            query = {
+                sql: "SELECT * FROM pasien JOIN kelurahan ON pasien.kd_kel = kelurahan.kd_kel JOIN kecamatan ON pasien.kd_kec = kecamatan.kd_kec JOIN kabupaten ON pasien.kd_kab = kabupaten.kd_kab WHERE pasien.no_peserta = ? OR pasien.no_ktp = ?",
+                values: [dataRujukan.response.rujukan.peserta.noKartu, dataRujukan.response.rujukan.peserta.nik]
+            }
+            const data = await window.api.mysql(query)
+            if (data.length <= 0) {
+                throw new Error("Pasien belum terdaftar, silahkan mengambil antrian pendaftaran")
+            }
+            query = {
+                sql: "SELECT * FROM dokter join jadwal on jadwal.kd_dokter = dokter.kd_dokter join poliklinik on poliklinik.kd_poli = jadwal.kd_poli join maping_dokter_dpjpvclaim on maping_dokter_dpjpvclaim.kd_dokter = dokter.kd_dokter join maping_poli_bpjs on maping_poli_bpjs.kd_poli_rs = poliklinik.kd_poli WHERE maping_poli_bpjs.kd_poli_bpjs = ? and jadwal.hari_kerja = ?",
+                values: [dataRujukan.response.rujukan.poliRujukan.kode, hari[today.getDay()]]
+            }
+            const dataTujuan = await window.api.mysql(query)
+            if (dataTujuan.length <= 0) {
+                throw new Error("Tidak ada Poli tujuan di hari ini")
+            }
+
+            formNoRM.value = data[0].no_rkm_medis
+            formNama.value = data[0].nm_pasien
+            formAlamat.value = data[0].alamat
+            formPoli.value = dataTujuan[0].nm_poli
+            formDokter.value = dataTujuan[0].nm_dokter
+        } else {
+            query = {
+                sql: "SELECT * from bridging_surat_kontrol_bpjs JOIN bridging_sep ON bridging_surat_kontrol_bpjs.no_sep = bridging_sep.no_sep join pasien on pasien.no_rkm_medis = bridging_sep.nomr WHERE bridging_surat_kontrol_bpjs.no_surat = ?",
+                values: [customState]
+            }
+            const dataKontrol = await window.api.mysql(query)
+            if (dataKontrol.length <= 0) {
+                throw new Error("Surat Kontrol tidak ditemukan")
+            } 
+ 
+            query = {
+                sql: "SELECT * FROM dokter join jadwal on jadwal.kd_dokter = dokter.kd_dokter join poliklinik on poliklinik.kd_poli = jadwal.kd_poli join maping_dokter_dpjpvclaim on maping_dokter_dpjpvclaim.kd_dokter = dokter.kd_dokter join maping_poli_bpjs on maping_poli_bpjs.kd_poli_rs = poliklinik.kd_poli WHERE maping_poli_bpjs.kd_poli_bpjs = ? and jadwal.hari_kerja = ?",
+                values: [dataKontrol[0].kd_poli_bpjs, hari[today.getDay()]]
+            }
+            const dataTujuan = await window.api.mysql(query)
+            if (dataTujuan.length <= 0) {
+                throw new Error("Tidak ada Poli tujuan di hari ini")
+            }
+            formNoRM.value = dataKontrol[0].no_rkm_medis
+            formNama.value = dataKontrol[0].nm_pasien
+            formAlamat.value = dataKontrol[0].alamat
+            formPoli.value = dataTujuan[0].nm_poli
+            formDokter.value = dataTujuan[0].nm_dokter
+        }
+        APMProcess = false
+        await sleep(2000)
+        Swal.close()
+        BPJSModal.show()
+    } catch (error) {
+        APMProcess = false
+        await sleep(2000)
+        Swal.close()
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: error.message,
+            timerProgressBar: true,
+            showConfirmButton: false,
+            timer: 3000
+        })
+    }
+}
+ 
+const confirmCustomInputSubmit = async () => {
     if (customState === "" || customState.length != 19) {
         return
     }
     APMProcess = true
+    Swal.fire({
+        icon: 'info',
+        title: 'Loading',
+        text: 'Silahkan tunggu sebentar',
+        showConfirmButton: false,
+        allowOutsideClick: false,
+        didOpen: () => {
+            Swal.showLoading()
+        }
+    })
     try {
         let query
         const today = new Date()
@@ -371,18 +515,24 @@ const customInputSubmit = async () => {
             }
             const dataRujukan = await window.api.rujukan(req)
             if (dataRujukan.metadata.message !== "OK") {
-                throw error
+                throw new Error("RUjukan tidak ditemukan")
             }
             query = {
                 sql: "SELECT * FROM pasien JOIN kelurahan ON pasien.kd_kel = kelurahan.kd_kel JOIN kecamatan ON pasien.kd_kec = kecamatan.kd_kec JOIN kabupaten ON pasien.kd_kab = kabupaten.kd_kab WHERE pasien.no_peserta = ? OR pasien.no_ktp = ?",
                 values: [dataRujukan.response.rujukan.peserta.noKartu, dataRujukan.response.rujukan.peserta.nik]
             }
             const data = await window.api.mysql(query)
+            if (data.length <= 0) {
+                throw new Error("Pasien belum terdaftar, silahkan mengambil antrian pendaftaran")
+            }
             query = {
                 sql: "SELECT * FROM dokter join jadwal on jadwal.kd_dokter = dokter.kd_dokter join poliklinik on poliklinik.kd_poli = jadwal.kd_poli join maping_dokter_dpjpvclaim on maping_dokter_dpjpvclaim.kd_dokter = dokter.kd_dokter join maping_poli_bpjs on maping_poli_bpjs.kd_poli_rs = poliklinik.kd_poli WHERE maping_poli_bpjs.kd_poli_bpjs = ? and jadwal.hari_kerja = ?",
                 values: [dataRujukan.response.rujukan.poliRujukan.kode, hari[today.getDay()]]
             }
             const dataTujuan = await window.api.mysql(query)
+            if (dataTujuan.length <= 0) {
+                throw new Error("Tidak ada Poli tujuan di hari ini")
+            }
             const dataPasien = data[0]
             const noReg = await setNoReg(dataTujuan[0].kd_poli, dataTujuan[0].kd_dokter)
             const statusDaftar = await setSttsDaftar(dataPasien.no_rkm_medis)
@@ -442,7 +592,7 @@ const customInputSubmit = async () => {
             }
             const resAntrean = await window.api.addAntrean(dataAntrean)
             if (![200, 208].includes(resAntrean.metadata.code)) {
-                throw error
+                throw new Error("Gagal add Antrean BPJS")
             }
  
             const dataSep = {
@@ -509,6 +659,9 @@ const customInputSubmit = async () => {
                 }
             }
             const resultSep = await window.api.sep(dataSep)
+            if (![200].includes(resultSep.metadata.code)) {
+                throw new Error("Gagal pembuatan SEP BPJS")
+            }
             query = {
                 sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 values: [
@@ -561,6 +714,15 @@ const customInputSubmit = async () => {
                 values: [noRawat, '3']
             }
             await window.api.mysql(query)
+            window.api.send('APMPrint', {
+                noRawat: noRawat,
+                nama: dataPasien.nm_pasien,
+                noRM: dataPasien.no_rkm_medis,
+                jk: dataPasien.jk,
+                jenis: 'BPJS Kesehatan',
+                poli: dataTujuan[0].nm_poli,
+                dokter: dataTujuan[0].nm_dokter
+            })
         } else {
             query = {
                 sql: "SELECT * from bridging_surat_kontrol_bpjs JOIN bridging_sep ON bridging_surat_kontrol_bpjs.no_sep = bridging_sep.no_sep join pasien on pasien.no_rkm_medis = bridging_sep.nomr WHERE bridging_surat_kontrol_bpjs.no_surat = ?",
@@ -568,7 +730,7 @@ const customInputSubmit = async () => {
             }
             const dataKontrol = await window.api.mysql(query)
             if (dataKontrol.length <= 0) {
-                throw error
+                throw new Error("surat kontrol tidak ditemukan")
             } 
  
             query = {
@@ -576,6 +738,9 @@ const customInputSubmit = async () => {
                 values: [dataKontrol[0].kd_poli_bpjs, hari[today.getDay()]]
             }
             const dataTujuan = await window.api.mysql(query)
+            if (dataTujuan.length <= 0) {
+                throw new Error("Tidak ada Poli tujuan di hari ini")
+            }
             const noReg = await setNoReg(dataTujuan[0].kd_poli, dataTujuan[0].kd_dokter)
             const statusDaftar = await setSttsDaftar(dataKontrol[0].no_rkm_medis)
             const biayaReg = await setBiayaReg(dataTujuan[0].kd_poli, setSttsDaftar)
@@ -633,7 +798,7 @@ const customInputSubmit = async () => {
             }
             const resAntrean = await window.api.addAntrean(dataAntrean)
             if (![200, 208].includes(resAntrean.metadata.code)) {
-                throw error
+                throw new Error("Gagal add Antrean BPJS")
             }
  
             const dataSep = {
@@ -700,6 +865,9 @@ const customInputSubmit = async () => {
                 }
             }
             const resultSep = await window.api.sep(dataSep)
+            if (![200].includes(resultSep.metadata.code)) {
+                throw new Error("Gagal pembuatan SEP BPJS")
+            }
             query = {
                 sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 values: [
@@ -767,8 +935,19 @@ const customInputSubmit = async () => {
                 values: [noRawat, '3']
             }
             await window.api.mysql(query)
+            window.api.send('APMPrint', {
+                noRawat: noRawat,
+                nama: dataKontrol[0].nm_pasien,
+                noRM: dataKontrol[0].no_rkm_medis,
+                jk: dataKontrol[0].jk,
+                jenis: 'BPJS Kesehatan',
+                poli: dataTujuan[0].nm_poli,
+                dokter: dataTujuan[0].nm_dokter
+            })
         }
         APMProcess = false
+        BPJSModal.hide()
+        Swal.close()
         Swal.fire({
             icon: 'success',
             title: 'Success',
@@ -779,10 +958,12 @@ const customInputSubmit = async () => {
         })
     } catch (error) {
         APMProcess = false
+        BPJSModal.hide()
+        Swal.close()
         Swal.fire({
             icon: 'error',
             title: 'Error',
-            text: 'Pendaftaran Gagal',
+            text: error.message,
             timerProgressBar: true,
             showConfirmButton: false,
             timer: 3000
@@ -854,7 +1035,7 @@ const numpad = (num) => {
         }
     } else if (num === 'done') {
         numInputSubmit()
-    } else {
+    } else if (numState.length < 16) {
         numState += num
         reloadNumInput()
     }
@@ -871,7 +1052,7 @@ const customPad = (value) => {
         }
     } else if (value === 'done') {
         customInputSubmit()
-    } else {
+    } else if (customState.length < 19) {
         customState += value
         reloadCustomInput()
     }
@@ -1080,21 +1261,14 @@ const daftar = async () => {
             values: [noRawat, '3']
         }
         await window.api.mysql(query)
-        const antriVerif = await ambilAntrian('verifikasi')
-        socket.send(JSON.stringify({
-            antrian: antriVerif,
-            type: 'verifikasi'
-        }))
         window.api.send('APMPrint', {
             noRawat: noRawat,
-            noAntri: noReg,
             nama: dataPasien.nm_pasien,
             noRM: noRM,
             jk: dataPasien.jk,
             jenis: namaPenjab,
             poli: namaPoli,
-            dokter: namaDokter,
-            antriVerif: antriVerif
+            dokter: namaDokter
         })
         document.getElementById("daftarButton").disabled = false
         window.location = 'index.html'
