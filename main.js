@@ -1,4 +1,4 @@
-require('dotenv').config()
+const config = require('./config.json')
 const { app, BrowserWindow, ipcMain, screen } = require('electron')
 const url = require('url')
 const path = require('path')
@@ -10,10 +10,10 @@ const LZString = require('lz-string')
 let win, antrianWorker, APMWorker
 
 const pool = mysql.createPool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_NAME,
+    host: config.DB_HOST,
+    user: config.DB_USER,
+    password: config.DB_PASSWORD,
+    database: config.DB_NAME,
     dateStrings: true
 })
 
@@ -23,7 +23,7 @@ const {
     BPJS_USER_KEY_ANTREAN,
     BPJS_USER_KEY_VCLAIM,
     BPJS_BASE_URL
-} = process.env
+} = config
 
 const createWindow = (width, height) => {
     win = new BrowserWindow({
@@ -46,7 +46,6 @@ const createWindow = (width, height) => {
     }))
 
     win.setMenu(null)
-    win.webContents.openDevTools()
 
     antrianWorker = new BrowserWindow({
         width: 303,
