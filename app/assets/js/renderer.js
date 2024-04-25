@@ -90,7 +90,8 @@ const checkinSubmit = async (input) => {
         }
     })
     try {
-        const currentDate = new Date().toJSON().slice(0, 10)
+        const currentDate = new Date()
+        const tanggal = currentDate.toDateInputValue()
         document.getElementById('checkin').value = ""
         const data = JSON.parse(window.atob(input))
         const code = data.noRujukan.charAt(12)
@@ -117,7 +118,7 @@ const checkinSubmit = async (input) => {
                 "request": {
                     "t_sep": {
                         "noKartu": dataRujukan.response.rujukan.peserta.noKartu,
-                        "tglSep": currentDate,
+                        "tglSep": tanggal,
                         "ppkPelayanan": "1104R005",
                         "jnsPelayanan": "2",
                         "klsRawat": {
@@ -177,6 +178,10 @@ const checkinSubmit = async (input) => {
                 }
             }
             const resultSep = await window.api.sep(dataSep)
+            if (![200].includes(resultSep.metadata.code)) {
+                console.log(resultSep)
+                throw new Error("Gagal pembuatan SEP BPJS")
+            }
             query = {
                 sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 values: [
@@ -229,7 +234,7 @@ const checkinSubmit = async (input) => {
                 "request": {
                     "t_sep": {
                         "noKartu": data.nokapst,
-                        "tglSep": currentDate,
+                        "tglSep": tanggal,
                         "ppkPelayanan": "1104R005",
                         "jnsPelayanan": "2",
                         "klsRawat": {
@@ -289,6 +294,10 @@ const checkinSubmit = async (input) => {
                 }
             }
             const resultSep = await window.api.sep(dataSep)
+            if (![200].includes(resultSep.metadata.code)) {
+                console.log(resultSep)
+                throw new Error("Gagal pembuatan SEP BPJS")
+            }
             query = {
                 sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
                 values: [
@@ -660,6 +669,7 @@ const confirmCustomInputSubmit = async () => {
             }
             const resultSep = await window.api.sep(dataSep)
             if (![200].includes(resultSep.metadata.code)) {
+                console.log(resultSep)
                 throw new Error("Gagal pembuatan SEP BPJS")
             }
             query = {
@@ -866,6 +876,7 @@ const confirmCustomInputSubmit = async () => {
             }
             const resultSep = await window.api.sep(dataSep)
             if (![200].includes(resultSep.metadata.code)) {
+                console.log(resultSep)
                 throw new Error("Gagal pembuatan SEP BPJS")
             }
             query = {

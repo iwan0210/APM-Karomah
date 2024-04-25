@@ -1,0 +1,11 @@
+{
+    "DB_HOST":"host",
+    "DB_USER":"user",
+    "DB_PASSWORD":"password",
+    "DB_NAME":"db",
+    "BPJS_CONST_ID":"xxx",
+    "BPJS_SECRET":"xxxx",
+    "BPJS_USER_KEY_ANTREAN":"xxx",
+    "BPJS_USER_KEY_VCLAIM":"xxx",
+    "BPJS_BASE_URL":"https://apijkn.bpjs-kesehatan.go.id/"
+}

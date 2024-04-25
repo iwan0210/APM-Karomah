@@ -46,6 +46,7 @@ const createWindow = (width, height) => {
     }))
 
     win.setMenu(null)
+    win.webContents.openDevTools()
 
     antrianWorker = new BrowserWindow({
         width: 303,
@@ -138,17 +139,19 @@ ipcMain.handle('mysql',
                     conn.release()
                     resolve(rows)
                 })
+            } else {
+                conn.query(query, (err, rows, _) => {
+                    if (err) {
+                        console.log(err)
+                        conn.release()
+                        reject(err)
+                    }
+                    conn.release()
+                    resolve(rows)
+                })
             }
 
-            conn.query(query, (err, rows, _) => {
-                if (err) {
-                    console.log(err)
-                    conn.release()
-                    reject(err)
-                }
-                conn.release()
-                resolve(rows)
-            })
+            
         })
     })
 )
