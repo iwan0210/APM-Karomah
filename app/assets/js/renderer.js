@@ -178,7 +178,7 @@ const checkinSubmit = async (input) => {
                 }
             }
             const resultSep = await window.api.sep(dataSep)
-            if (![200].includes(resultSep.metadata.code)) {
+            if (![200, "200"].includes(resultSep.metadata.code)) {
                 console.log(resultSep)
                 throw new Error("Gagal pembuatan SEP BPJS")
             }
@@ -294,7 +294,7 @@ const checkinSubmit = async (input) => {
                 }
             }
             const resultSep = await window.api.sep(dataSep)
-            if (![200].includes(resultSep.metadata.code)) {
+            if (![200, "200"].includes(resultSep.metadata.code)) {
                 console.log(resultSep)
                 throw new Error("Gagal pembuatan SEP BPJS")
             }
@@ -668,7 +668,7 @@ const confirmCustomInputSubmit = async () => {
                 }
             }
             const resultSep = await window.api.sep(dataSep)
-            if (![200].includes(resultSep.metadata.code)) {
+            if (![200, "200"].includes(resultSep.metadata.code)) {
                 console.log(resultSep)
                 throw new Error("Gagal pembuatan SEP BPJS")
             }
