@@ -46,7 +46,7 @@ const createWindow = (width, height) => {
     }))
 
     win.setMenu(null)
-    win.webContents.openDevTools()
+    //win.webContents.openDevTools()
 
     antrianWorker = new BrowserWindow({
         width: 303,
