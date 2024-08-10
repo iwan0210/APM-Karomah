@@ -1,4 +1,4 @@
-const socket = new WebSocket('ws://192.168.120.100:8000')
+const socket = new WebSocket('wss://local.rskaromahholistic.com:8000')
 const hari = ['AKHAD', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU']
 let numState = ""
 let customState = ""
@@ -362,16 +362,8 @@ const checkinSubmit = async (input) => {
             values: [data.kodeBooking]
         }
         await window.api.mysql(query)
-        query = {
-            sql: "INSERT INTO mutasi_berkas(no_rawat, status, dikirim) VALUES(?, ?, NOW())",
-            values: [dataMJKN.no_rawat, 'Sudah Dikirim']
-        }
-        await window.api.mysql(query)
-        query = {
-            sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
-            values: [dataMJKN.no_rawat, '3']
-        }
-        await window.api.mysql(query)
+        
+        await saveTaskId3(dataMJKN.no_rawat)
  
         APMProcess = false
         await sleep(2000)
@@ -437,6 +429,441 @@ const customInputSubmit = async () => {
     }
 }
  
+// const confirmCustomInputSubmit = async () => {
+//     if (customState === "" || customState.length != 19) {
+//         return
+//     }
+//     APMProcess = true
+//     showLoading()
+//     try {
+//         let query
+//         const today = new Date()
+//         const code = customState.charAt(12)
+//         const isNewReference = ['P', 'Y', 'B'].includes(code)
+//         if (isNewReference) {
+//             const dataRujukan = await fetchRujukanData(code)
+
+//             const dataPasien = await getPasien(dataRujukan.response.rujukan.peserta.noKartu, dataRujukan.response.rujukan.peserta.nik)
+            
+//             const dataTujuan = await getTujuan(dataRujukan.response.rujukan.poliRujukan.kode, hari[today.getDay()])
+            
+//             const noReg = await setNoReg(dataTujuan.kd_poli, dataTujuan.kd_dokter)
+//             const statusDaftar = await setSttsDaftar(dataPasien.no_rkm_medis)
+//             const biayaReg = await setBiayaReg(dataTujuan.kd_poli, setSttsDaftar)
+//             const statusPoli = await setStatusPoli(dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter)
+//             const birth = new Date(dataPasien.tgl_lahir)
+//             const diff = new Date(today.getTime() - birth.getTime())
+//             let umur = diff.getFullYear() - 1970
+//             let statusUmur = 'Th'
+//             if (diff.getFullYear() - 1970 === 0) {
+//                 umur = diff.getMonth()
+//                 statusUmur = 'Bl'
+//                 if (!diff.getMonth()) {
+//                     umur = diff.getDate() - 1
+//                     statusUmur = 'Hr'
+//                 }
+//             }
+//             const jamReg = `${n(today.getHours(), 2)}:${n(today.getMinutes(), 2)}:${n(today.getSeconds(), 2)}`
+//             const noRawat = await setNoRawat()
+//             const tanggal = today.toDateInputValue()
+//             const alamatPJ = `${dataPasien.alamat}, ${dataPasien.nm_kel}, ${dataPasien.nm_kec}, ${dataPasien.nm_kab}`
+ 
+//             query = {
+//                 sql: "INSERT INTO reg_periksa VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+//                 values: [noReg, noRawat, tanggal, jamReg, dataTujuan.kd_dokter, dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataPasien.namakeluarga, alamatPJ, dataPasien.keluarga, biayaReg, 'Belum', statusDaftar, 'Ralan', 'A65', umur, statusUmur, 'Belum Bayar', statusPoli]
+//             }
+//             await window.api.mysql(query)
+//             query = {
+//                 sql: "SELECT DATE_ADD(CONCAT(?, ' ', ?), INTERVAL ? MINUTE) as estimate",
+//                 values: [tanggal, dataTujuan.jam_mulai.slice(0, -3), parseInt(noReg) * 10]
+//             }
+//             const estimate = await window.api.mysql(query)
+//             const dataAntrean = {
+//                 "kodebooking": noRawat,
+//                 "jenispasien": "JKN",
+//                 "nomorkartu": dataRujukan.response.rujukan.peserta.noKartu,
+//                 "nik": dataPasien.no_ktp,
+//                 "nohp": dataPasien.no_tlp,
+//                 "kodepoli": dataTujuan.kd_poli_bpjs,
+//                 "namapoli": dataTujuan.nm_poli_bpjs,
+//                 "pasienbaru": 0,
+//                 "norm": dataPasien.no_rkm_medis,
+//                 "tanggalperiksa": tanggal,
+//                 "kodedokter": dataTujuan.kd_dokter_bpjs,
+//                 "namadokter": dataTujuan.nm_dokter_bpjs,
+//                 "jampraktek": `${dataTujuan.jam_mulai.slice(0, -3)}-${dataTujuan.jam_selesai.slice(0, -3)}`,
+//                 "jeniskunjungan": (code == 'B') ? 4 : 1,
+//                 "nomorreferensi": customState,
+//                 "nomorantrean": `${dataTujuan.kd_poli}-${noReg}`,
+//                 "angkaantrean": parseInt(noReg),
+//                 "estimasidilayani": Date.parse(estimate[0].estimate),
+//                 "sisakuotajkn": dataTujuan.kuota - parseInt(noReg),
+//                 "kuotajkn": dataTujuan.kuota,
+//                 "sisakuotanonjkn": dataTujuan.kuota - parseInt(noReg),
+//                 "kuotanonjkn": dataTujuan.kuota,
+//                 "keterangan": "Peserta harap 30 menit lebih awal guna pencatatan administrasi."
+//             }
+//             const resAntrean = await window.api.addAntrean(dataAntrean)
+//             if (![200, 208].includes(resAntrean.metadata.code)) {
+//                 throw new Error("Gagal add Antrean BPJS")
+//             }
+ 
+//             const dataSep = {
+//                 "request": {
+//                     "t_sep": {
+//                         "noKartu": dataRujukan.response.rujukan.peserta.noKartu,
+//                         "tglSep": tanggal,
+//                         "ppkPelayanan": "1104R005",
+//                         "jnsPelayanan": "2",
+//                         "klsRawat": {
+//                             "klsRawatHak": dataRujukan.response.rujukan.peserta.hakKelas.kode,
+//                             "klsRawatNaik": "",
+//                             "pembiayaan": "",
+//                             "penanggungJawab": ""
+//                         },
+//                         "noMR": dataPasien.no_rkm_medis,
+//                         "rujukan": {
+//                             "asalRujukan": (code == 'B') ? "2" : "1",
+//                             "tglRujukan": dataRujukan.response.rujukan.tglKunjungan,
+//                             "noRujukan": dataRujukan.response.rujukan.noKunjungan,
+//                             "ppkRujukan": dataRujukan.response.rujukan.provPerujuk.kode
+//                         },
+//                         "catatan": "-",
+//                         "diagAwal": dataRujukan.response.rujukan.diagnosa.kode,
+//                         "poli": {
+//                             "tujuan": dataRujukan.response.rujukan.poliRujukan.kode,
+//                             "eksekutif": "0"
+//                         },
+//                         "cob": {
+//                             "cob": "0"
+//                         },
+//                         "katarak": {
+//                             "katarak": "0"
+//                         },
+//                         "jaminan": {
+//                             "lakaLantas": "0",
+//                             "noLP": "",
+//                             "penjamin": {
+//                                 "tglKejadian": "",
+//                                 "keterangan": "",
+//                                 "suplesi": {
+//                                     "suplesi": "0",
+//                                     "noSepSuplesi": "",
+//                                     "lokasiLaka": {
+//                                         "kdPropinsi": "",
+//                                         "kdKabupaten": "",
+//                                         "kdKecamatan": ""
+//                                     }
+//                                 }
+//                             }
+//                         },
+//                         "tujuanKunj": "0",
+//                         "flagProcedure": "",
+//                         "kdPenunjang": "",
+//                         "assesmentPel": "",
+//                         "skdp": {
+//                             "noSurat": "",
+//                             "kodeDPJP": dataTujuan.kd_dokter_bpjs
+//                         },
+//                         "dpjpLayan": dataTujuan.kd_dokter_bpjs,
+//                         "noTelp": dataPasien.no_tlp,
+//                         "user": "Bridging RS Karomah Holistic"
+//                     }
+//                 }
+//             }
+//             const resultSep = await window.api.sep(dataSep)
+//             if (![200, "200"].includes(resultSep.metadata.code)) {
+//                 console.log(resultSep)
+//                 throw new Error("Gagal pembuatan SEP BPJS")
+//             }
+//             query = {
+//                 sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+//                 values: [
+//                     resultSep.response.sep.noSep,
+//                     noRawat,
+//                     resultSep.response.sep.tglSep,
+//                     dataRujukan.response.rujukan.tglKunjungan,
+//                     resultSep.response.sep.noRujukan,
+//                     dataRujukan.response.rujukan.provPerujuk.kode,
+//                     dataRujukan.response.rujukan.provPerujuk.nama,
+//                     '1104R005',
+//                     'RS KAROMAH HOLISTIC - KOTA PEKALONGAN',
+//                     '2',
+//                     resultSep.response.sep.catatan,
+//                     dataRujukan.response.rujukan.diagnosa.kode,
+//                     dataRujukan.response.rujukan.diagnosa.nama,
+//                     resultSep.response.sep.kdPoli,
+//                     resultSep.response.sep.poli,
+//                     dataRujukan.response.rujukan.peserta.hakKelas.kode,
+//                     "", "", "", '0',
+//                     "Pendaftaran Mandiri",
+//                     resultSep.response.sep.peserta.noMr,
+//                     resultSep.response.sep.peserta.nama,
+//                     resultSep.response.sep.peserta.tglLahir,
+//                     resultSep.response.sep.peserta.jnsPeserta,
+//                     dataRujukan.response.rujukan.peserta.hakKelas.sex,
+//                     resultSep.response.sep.peserta.noKartu,
+//                     resultSep.response.sep.tglSep,
+//                     (code == 'B') ? "2. Faskes 2(RS)" : "1. Faskes 1",
+//                     "0. Tidak", "0. Tidak",
+//                     dataPasien.no_tlp,
+//                     "0. Tidak", "0000-00-00", "", "0. Tidak", "", "", "", "", "", "", "", "",
+//                     dataTujuan.kd_dokter_bpjs,
+//                     dataTujuan.kd_dokter_bpjs,
+//                     '0', "", "", "",
+//                     dataTujuan.kd_dokter_bpjs,
+//                     dataTujuan.kd_dokter_bpjs
+//                 ]
+//             }
+//             await window.api.mysql(query)
+ 
+//             await taskId3(noRawat)
+//             query = {
+//                 sql: "INSERT INTO mutasi_berkas(no_rawat, status, dikirim) VALUES(?, ?, NOW())",
+//                 values: [noRawat, 'Sudah Dikirim']
+//             }
+//             await window.api.mysql(query)
+//             query = {
+//                 sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
+//                 values: [noRawat, '3']
+//             }
+//             await window.api.mysql(query)
+//             window.api.send('APMPrint', {
+//                 noRawat: noRawat,
+//                 nama: dataPasien.nm_pasien,
+//                 noRM: dataPasien.no_rkm_medis,
+//                 jk: dataPasien.jk,
+//                 jenis: 'BPJS Kesehatan',
+//                 poli: dataTujuan.nm_poli,
+//                 dokter: dataTujuan.nm_dokter
+//             })
+//         } else {
+//             const dataKontrol = await getKontrol(customState)
+ 
+//             const dataTujuan = await getTujuan(dataKontrol.kd_poli_bpjs, hari[today.getDay()])
+
+//             const noReg = await setNoReg(dataTujuan.kd_poli, dataTujuan.kd_dokter)
+//             const statusDaftar = await setSttsDaftar(dataKontrol.no_rkm_medis)
+//             const biayaReg = await setBiayaReg(dataTujuan.kd_poli, setSttsDaftar)
+//             const statusPoli = await setStatusPoli(dataKontrol.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter)
+//             const birth = new Date(dataKontrol.tgl_lahir)
+//             const diff = new Date(today.getTime() - birth.getTime())
+//             let umur = diff.getFullYear() - 1970
+//             let statusUmur = 'Th'
+//             if (diff.getFullYear() - 1970 === 0) {
+//                 umur = diff.getMonth()
+//                 statusUmur = 'Bl'
+//                 if (!diff.getMonth()) {
+//                     umur = diff.getDate() - 1
+//                     statusUmur = 'Hr'
+//                 }
+//             }
+//             const jamReg = `${n(today.getHours(), 2)}:${n(today.getMinutes(), 2)}:${n(today.getSeconds(), 2)}`
+//             const noRawat = await setNoRawat()
+//             const tanggal = today.toDateInputValue()
+//             const alamatPJ = `${dataKontrol.alamat}, ${dataKontrol.nm_kel}, ${dataKontrol.nm_kec}, ${dataKontrol.nm_kab}`
+//             query = {
+//                 sql: "INSERT INTO reg_periksa VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+//                 values: [noReg, noRawat, tanggal, jamReg, dataTujuan.kd_dokter, dataKontrol.no_rkm_medis, dataTujuan.kd_poli, dataKontrol.namakeluarga, alamatPJ, dataKontrol.keluarga, biayaReg, 'Belum', statusDaftar, 'Ralan', 'A65', umur, statusUmur, 'Belum Bayar', statusPoli]
+//             }
+//             await window.api.mysql(query)
+//             query = {
+//                 sql: "SELECT DATE_ADD(CONCAT(?, ' ', ?), INTERVAL ? MINUTE) as estimate",
+//                 values: [tanggal, dataTujuan.jam_mulai.slice(0, -3), parseInt(noReg) * 10]
+//             }
+//             const estimate = await window.api.mysql(query)
+//             const dataAntrean = {
+//                 "kodebooking": noRawat,
+//                 "jenispasien": "JKN",
+//                 "nomorkartu": dataKontrol.no_kartu,
+//                 "nik": dataKontrol.no_ktp,
+//                 "nohp": dataKontrol.no_tlp,
+//                 "kodepoli": dataTujuan.kd_poli_bpjs,
+//                 "namapoli": dataTujuan.nm_poli_bpjs,
+//                 "pasienbaru": 0,
+//                 "norm": dataKontrol.no_rkm_medis,
+//                 "tanggalperiksa": tanggal,
+//                 "kodedokter": dataTujuan.kd_dokter_bpjs,
+//                 "namadokter": dataTujuan.nm_dokter_bpjs,
+//                 "jampraktek": `${dataTujuan.jam_mulai.slice(0, -3)}-${dataTujuan.jam_selesai.slice(0, -3)}`,
+//                 "jeniskunjungan": 3,
+//                 "nomorreferensi": customState,
+//                 "nomorantrean": `${dataTujuan.kd_poli}-${noReg}`,
+//                 "angkaantrean": parseInt(noReg),
+//                 "estimasidilayani": Date.parse(estimate[0].estimate),
+//                 "sisakuotajkn": dataTujuan.kuota - parseInt(noReg),
+//                 "kuotajkn": dataTujuan.kuota,
+//                 "sisakuotanonjkn": dataTujuan.kuota - parseInt(noReg),
+//                 "kuotanonjkn": dataTujuan.kuota,
+//                 "keterangan": "Peserta harap 30 menit lebih awal guna pencatatan administrasi."
+//             }
+//             const resAntrean = await window.api.addAntrean(dataAntrean)
+//             if (![200, 208].includes(resAntrean.metadata.code)) {
+//                 throw new Error("Gagal add Antrean BPJS")
+//             }
+ 
+//             const dataSep = {
+//                 "request": {
+//                     "t_sep": {
+//                         "noKartu": dataKontrol.no_kartu,
+//                         "tglSep": tanggal,
+//                         "ppkPelayanan": "1104R005",
+//                         "jnsPelayanan": "2",
+//                         "klsRawat": {
+//                             "klsRawatHak": dataKontrol.klsRawat,
+//                             "klsRawatNaik": "",
+//                             "pembiayaan": "",
+//                             "penanggungJawab": ""
+//                         },
+//                         "noMR": dataKontrol.no_rkm_medis,
+//                         "rujukan": {
+//                             "asalRujukan": `${dataKontrol.asal_rujukan.charAt(0)}`,
+//                             "tglRujukan": dataKontrol.tglrujukan,
+//                             "noRujukan": (dataKontrol.no_rujukan.charAt(12) == "K") ? dataKontrol[0].no_sep : dataKontrol[0].no_rujukan,
+//                             "ppkRujukan": dataKontrol.kdppkrujukan
+//                         },
+//                         "catatan": "-",
+//                         "diagAwal": dataKontrol.diagawal,
+//                         "poli": {
+//                             "tujuan": dataKontrol.kd_poli_bpjs,
+//                             "eksekutif": "0"
+//                         },
+//                         "cob": {
+//                             "cob": "0"
+//                         },
+//                         "katarak": {
+//                             "katarak": dataKontrol.katarak.charAt(0)
+//                         },
+//                         "jaminan": {
+//                             "lakaLantas": dataKontrol.lakalantas,
+//                             "noLP": "",
+//                             "penjamin": {
+//                                 "tglKejadian": (dataKontrol.lakalantas != 0) ? dataKontrol.tglkkl : "",
+//                                 "keterangan": "",
+//                                 "suplesi": {
+//                                     "suplesi": (dataKontrol.lakalantas != 0) ? "1" : "0",
+//                                     "noSepSuplesi": (dataKontrol.lakalantas != 0) ? ((dataKontrol.no_sep_suplesi) ? dataKontrol.no_sep_suplesi : dataKontrol.no_sep) : "",
+//                                     "lokasiLaka": {
+//                                         "kdPropinsi": (dataKontrol.lakalantas != 0) ? dataKontrol.kdprop : "",
+//                                         "kdKabupaten": (dataKontrol.lakalantas != 0) ? dataKontrol.kdkab : "",
+//                                         "kdKecamatan": (dataKontrol.lakalantas != 0) ? dataKontrol.kdkec : ""
+//                                     }
+//                                 }
+//                             }
+//                         },
+//                         "tujuanKunj": (dataKontrol.no_rujukan.charAt(12) == 'K') ? "0" : "2",
+//                         "flagProcedure": "",
+//                         "kdPenunjang": "",
+//                         "assesmentPel": (dataKontrol.no_rujukan.charAt(12) == 'K') ? "" : "5",
+//                         "skdp": {
+//                             "noSurat": dataKontrol.no_surat,
+//                             "kodeDPJP": dataTujuan.kd_dokter_bpjs
+//                         },
+//                         "dpjpLayan": dataTujuan.kd_dokter_bpjs,
+//                         "noTelp": dataKontrol.notelep,
+//                         "user": "Bridging RS Karomah Holistic"
+//                     }
+//                 }
+//             }
+//             const resultSep = await window.api.sep(dataSep)
+//             if (![200, "200"].includes(resultSep.metadata.code)) {
+//                 console.log(resultSep)
+//                 throw new Error("Gagal pembuatan SEP BPJS")
+//             }
+//             query = {
+//                 sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+//                 values: [
+//                     resultSep.response.sep.noSep,
+//                     noRawat,
+//                     resultSep.response.sep.tglSep,
+//                     dataKontrol.tglrujukan,
+//                     resultSep.response.sep.noRujukan,
+//                     dataKontrol.kdppkrujukan,
+//                     dataKontrol.nmppkrujukan,
+//                     '1104R005',
+//                     'RS KAROMAH HOLISTIC - KOTA PEKALONGAN',
+//                     '2',
+//                     resultSep.response.sep.catatan,
+//                     dataKontrol.diagawal,
+//                     dataKontrol.nmdiagnosaawal,
+//                     resultSep.response.sep.kdPoli,
+//                     resultSep.response.sep.poli,
+//                     dataKontrol.klsrawat,
+//                     "", "", "",
+//                     `${dataKontrol.lakalantas}`,
+//                     "APM",
+//                     resultSep.response.sep.peserta.noMr,
+//                     resultSep.response.sep.peserta.nama,
+//                     resultSep.response.sep.peserta.tglLahir,
+//                     resultSep.response.sep.peserta.jnsPeserta,
+//                     dataKontrol.jkel,
+//                     resultSep.response.sep.peserta.noKartu,
+//                     resultSep.response.sep.tglSep,
+//                     dataKontrol.asal_rujukan,
+//                     "0. Tidak", "0. Tidak",
+//                     dataKontrol.notelep,
+//                     dataKontrol.katarak,
+//                     (dataKontrol.lakalantas != 0) ? dataKontrol.tglkkl : "0000-00-00",
+//                     (dataKontrol.lakalantas != 0) ? "KLL" : "",
+//                     (dataKontrol.lakalantas != 0) ? "1.Ya" : "0. Tidak",
+//                     (dataKontrol.lakalantas != 0) ? ((dataKontrol.no_sep_suplesi) ? dataKontrol[0].no_sep_suplesi : dataKontrol.no_sep) : "",
+//                     (dataKontrol.lakalantas != 0) ? dataKontrol.kdprop : "",
+//                     (dataKontrol.lakalantas != 0) ? dataKontrol.nmprop : "",
+//                     (dataKontrol.lakalantas != 0) ? dataKontrol.kdkab : "",
+//                     (dataKontrol.lakalantas != 0) ? dataKontrol.nmkab : "",
+//                     (dataKontrol.lakalantas != 0) ? dataKontrol.kdkec : "",
+//                     (dataKontrol.lakalantas != 0) ? dataKontrol.nmkec : "",
+//                     resultSep.response.sep.noRujukan,
+//                     dataKontrol.kd_dokter_bpjs,
+//                     dataKontrol.nm_dokter_bpjs,
+//                     (dataKontrol.no_rujukan.charAt(12) == 'K') ? "0" : "2",
+//                     "",
+//                     "",
+//                     (dataKontrol.no_rujukan.charAt(12) == 'K') ? "" : "5",
+//                     dataKontrol.kd_dokter_bpjs,
+//                     dataKontrol.nm_dokter_bpjs
+//                 ]
+//             }
+//             await window.api.mysql(query)
+ 
+//             await taskId3(noRawat)
+//             query = {
+//                 sql: "INSERT INTO mutasi_berkas(no_rawat, status, dikirim) VALUES(?, ?, NOW())",
+//                 values: [noRawat, 'Sudah Dikirim']
+//             }
+//             await window.api.mysql(query)
+//             query = {
+//                 sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
+//                 values: [noRawat, '3']
+//             }
+//             await window.api.mysql(query)
+//             window.api.send('APMPrint', {
+//                 noRawat: noRawat,
+//                 nama: dataKontrol.nm_pasien,
+//                 noRM: dataKontrol.no_rkm_medis,
+//                 jk: dataKontrol.jk,
+//                 jenis: 'BPJS Kesehatan',
+//                 poli: dataTujuan.nm_poli,
+//                 dokter: dataTujuan.nm_dokter
+//             })
+//         }
+//         APMProcess = false
+//         BPJSModal.hide()
+//         Swal.close()
+//         Swal.fire({
+//             icon: 'success',
+//             title: 'Success',
+//             text: 'Pendaftaran Berhasil',
+//             timerProgressBar: true,
+//             showConfirmButton: false,
+//             timer: 3000
+//         })
+//     } catch (error) {
+//         BPJSModal.hide()
+//         handleError(error)
+//     }
+// }
+
 const confirmCustomInputSubmit = async () => {
     if (customState === "" || customState.length != 19) {
         return
@@ -444,219 +871,36 @@ const confirmCustomInputSubmit = async () => {
     APMProcess = true
     showLoading()
     try {
-        let query
         const today = new Date()
         const code = customState.charAt(12)
-        if (['P', 'Y', 'B'].includes(code)) {
-            const dataRujukan = await fetchRujukanData(code)
+        const isNewReference = ['P', 'Y', 'B'].includes(code)
+        const tanggal = today.toDateInputValue()
+        let data, dataPasien, dataTujuan, noReg, noRawat, statusDaftar, biayaReg, statusPoli, umur, statusUmur, jamReg, alamatPJ, query, lakalantas, asalRujukan
 
-            const dataPasien = await getPasien(dataRujukan.response.rujukan.peserta.noKartu, dataRujukan.response.rujukan.peserta.nik)
-            
-            const dataTujuan = await getTujuan(dataRujukan.response.rujukan.poliRujukan.kode, hari[today.getDay()])
-            
-            const noReg = await setNoReg(dataTujuan.kd_poli, dataTujuan.kd_dokter)
-            const statusDaftar = await setSttsDaftar(dataPasien.no_rkm_medis)
-            const biayaReg = await setBiayaReg(dataTujuan.kd_poli, setSttsDaftar)
-            const statusPoli = await setStatusPoli(dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter)
-            const birth = new Date(dataPasien.tgl_lahir)
-            const diff = new Date(today.getTime() - birth.getTime())
-            let umur = diff.getFullYear() - 1970
-            let statusUmur = 'Th'
-            if (diff.getFullYear() - 1970 === 0) {
-                umur = diff.getMonth()
-                statusUmur = 'Bl'
-                if (!diff.getMonth()) {
-                    umur = diff.getDate() - 1
-                    statusUmur = 'Hr'
-                }
-            }
-            const jamReg = `${n(today.getHours(), 2)}:${n(today.getMinutes(), 2)}:${n(today.getSeconds(), 2)}`
-            const noRawat = await setNoRawat()
-            const tanggal = today.toDateInputValue()
-            const alamatPJ = `${dataPasien.alamat}, ${dataPasien.nm_kel}, ${dataPasien.nm_kec}, ${dataPasien.nm_kab}`
- 
-            query = {
-                sql: "INSERT INTO reg_periksa VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                values: [noReg, noRawat, tanggal, jamReg, dataTujuan.kd_dokter, dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataPasien.namakeluarga, alamatPJ, dataPasien.keluarga, biayaReg, 'Belum', statusDaftar, 'Ralan', 'A65', umur, statusUmur, 'Belum Bayar', statusPoli]
-            }
-            await window.api.mysql(query)
-            query = {
-                sql: "SELECT DATE_ADD(CONCAT(?, ' ', ?), INTERVAL ? MINUTE) as estimate",
-                values: [tanggal, dataTujuan.jam_mulai.slice(0, -3), parseInt(noReg) * 10]
-            }
-            const estimate = await window.api.mysql(query)
-            const dataAntrean = {
-                "kodebooking": noRawat,
-                "jenispasien": "JKN",
-                "nomorkartu": dataRujukan.response.rujukan.peserta.noKartu,
-                "nik": dataPasien.no_ktp,
-                "nohp": dataPasien.no_tlp,
-                "kodepoli": dataTujuan.kd_poli_bpjs,
-                "namapoli": dataTujuan.nm_poli_bpjs,
-                "pasienbaru": 0,
-                "norm": dataPasien.no_rkm_medis,
-                "tanggalperiksa": tanggal,
-                "kodedokter": dataTujuan.kd_dokter_bpjs,
-                "namadokter": dataTujuan.nm_dokter_bpjs,
-                "jampraktek": `${dataTujuan.jam_mulai.slice(0, -3)}-${dataTujuan.jam_selesai.slice(0, -3)}`,
-                "jeniskunjungan": (code == 'B') ? 4 : 1,
-                "nomorreferensi": customState,
-                "nomorantrean": `${dataTujuan.kd_poli}-${noReg}`,
-                "angkaantrean": parseInt(noReg),
-                "estimasidilayani": Date.parse(estimate[0].estimate),
-                "sisakuotajkn": dataTujuan.kuota - parseInt(noReg),
-                "kuotajkn": dataTujuan.kuota,
-                "sisakuotanonjkn": dataTujuan.kuota - parseInt(noReg),
-                "kuotanonjkn": dataTujuan.kuota,
-                "keterangan": "Peserta harap 30 menit lebih awal guna pencatatan administrasi."
-            }
-            const resAntrean = await window.api.addAntrean(dataAntrean)
-            if (![200, 208].includes(resAntrean.metadata.code)) {
-                throw new Error("Gagal add Antrean BPJS")
-            }
- 
-            const dataSep = {
-                "request": {
-                    "t_sep": {
-                        "noKartu": dataRujukan.response.rujukan.peserta.noKartu,
-                        "tglSep": tanggal,
-                        "ppkPelayanan": "1104R005",
-                        "jnsPelayanan": "2",
-                        "klsRawat": {
-                            "klsRawatHak": dataRujukan.response.rujukan.peserta.hakKelas.kode,
-                            "klsRawatNaik": "",
-                            "pembiayaan": "",
-                            "penanggungJawab": ""
-                        },
-                        "noMR": dataPasien.no_rkm_medis,
-                        "rujukan": {
-                            "asalRujukan": (code == 'B') ? "2" : "1",
-                            "tglRujukan": dataRujukan.response.rujukan.tglKunjungan,
-                            "noRujukan": dataRujukan.response.rujukan.noKunjungan,
-                            "ppkRujukan": dataRujukan.response.rujukan.provPerujuk.kode
-                        },
-                        "catatan": "-",
-                        "diagAwal": dataRujukan.response.rujukan.diagnosa.kode,
-                        "poli": {
-                            "tujuan": dataRujukan.response.rujukan.poliRujukan.kode,
-                            "eksekutif": "0"
-                        },
-                        "cob": {
-                            "cob": "0"
-                        },
-                        "katarak": {
-                            "katarak": "0"
-                        },
-                        "jaminan": {
-                            "lakaLantas": "0",
-                            "noLP": "",
-                            "penjamin": {
-                                "tglKejadian": "",
-                                "keterangan": "",
-                                "suplesi": {
-                                    "suplesi": "0",
-                                    "noSepSuplesi": "",
-                                    "lokasiLaka": {
-                                        "kdPropinsi": "",
-                                        "kdKabupaten": "",
-                                        "kdKecamatan": ""
-                                    }
-                                }
-                            }
-                        },
-                        "tujuanKunj": "0",
-                        "flagProcedure": "",
-                        "kdPenunjang": "",
-                        "assesmentPel": "",
-                        "skdp": {
-                            "noSurat": "",
-                            "kodeDPJP": dataTujuan.kd_dokter_bpjs
-                        },
-                        "dpjpLayan": dataTujuan.kd_dokter_bpjs,
-                        "noTelp": dataPasien.no_tlp,
-                        "user": "Bridging RS Karomah Holistic"
-                    }
-                }
-            }
-            const resultSep = await window.api.sep(dataSep)
-            if (![200, "200"].includes(resultSep.metadata.code)) {
-                console.log(resultSep)
-                throw new Error("Gagal pembuatan SEP BPJS")
-            }
-            query = {
-                sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                values: [
-                    resultSep.response.sep.noSep,
-                    noRawat,
-                    resultSep.response.sep.tglSep,
-                    dataRujukan.response.rujukan.tglKunjungan,
-                    resultSep.response.sep.noRujukan,
-                    dataRujukan.response.rujukan.provPerujuk.kode,
-                    dataRujukan.response.rujukan.provPerujuk.nama,
-                    '1104R005',
-                    'RS KAROMAH HOLISTIC - KOTA PEKALONGAN',
-                    '2',
-                    resultSep.response.sep.catatan,
-                    dataRujukan.response.rujukan.diagnosa.kode,
-                    dataRujukan.response.rujukan.diagnosa.nama,
-                    resultSep.response.sep.kdPoli,
-                    resultSep.response.sep.poli,
-                    dataRujukan.response.rujukan.peserta.hakKelas.kode,
-                    "", "", "", '0',
-                    "Pendaftaran Mandiri",
-                    resultSep.response.sep.peserta.noMr,
-                    resultSep.response.sep.peserta.nama,
-                    resultSep.response.sep.peserta.tglLahir,
-                    resultSep.response.sep.peserta.jnsPeserta,
-                    dataRujukan.response.rujukan.peserta.hakKelas.sex,
-                    resultSep.response.sep.peserta.noKartu,
-                    resultSep.response.sep.tglSep,
-                    (code == 'B') ? "2. Faskes 2(RS)" : "1. Faskes 1",
-                    "0. Tidak", "0. Tidak",
-                    dataPasien.no_tlp,
-                    "0. Tidak", "0000-00-00", "", "0. Tidak", "", "", "", "", "", "", "", "",
-                    dataTujuan.kd_dokter_bpjs,
-                    dataTujuan.kd_dokter_bpjs,
-                    '0', "", "", "",
-                    dataTujuan.kd_dokter_bpjs,
-                    dataTujuan.kd_dokter_bpjs
-                ]
-            }
-            await window.api.mysql(query)
- 
-            await taskId3(noRawat)
-            query = {
-                sql: "INSERT INTO mutasi_berkas(no_rawat, status, dikirim) VALUES(?, ?, NOW())",
-                values: [noRawat, 'Sudah Dikirim']
-            }
-            await window.api.mysql(query)
-            query = {
-                sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
-                values: [noRawat, '3']
-            }
-            await window.api.mysql(query)
-            window.api.send('APMPrint', {
-                noRawat: noRawat,
-                nama: dataPasien.nm_pasien,
-                noRM: dataPasien.no_rkm_medis,
-                jk: dataPasien.jk,
-                jenis: 'BPJS Kesehatan',
-                poli: dataTujuan.nm_poli,
-                dokter: dataTujuan.nm_dokter
-            })
+        if (isNewReference) {
+            data = await fetchRujukanData(code)
+            dataPasien = await getPasien(data.response.rujukan.peserta.noKartu, data.response.rujukan.peserta.nik)
+            dataTujuan = await getTujuan(data.response.rujukan.poliRujukan.kode, hari[today.getDay()])
+            lakalantas = 0
+            asalRujukan = code === 'B' ? "2" : "1"
         } else {
-            const dataKontrol = await getKontrol(customState)
- 
-            const dataTujuan = await getTujuan(dataKontrol.kd_poli_bpjs, hari[today.getDay()])
+            data = await getKontrol(code)
+            dataPasien = data
+            dataTujuan = await getTujuan(data.kd_poli_bpjs, hari[today.getDay()])
+            lakalantas = data.lakalantas
+            asalRujukan = data.asal_rujukan.charAt(0)
+        }
 
-            const noReg = await setNoReg(dataTujuan.kd_poli, dataTujuan.kd_dokter)
-            const statusDaftar = await setSttsDaftar(dataKontrol.no_rkm_medis)
-            const biayaReg = await setBiayaReg(dataTujuan.kd_poli, setSttsDaftar)
-            const statusPoli = await setStatusPoli(dataKontrol.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter)
-            const birth = new Date(dataKontrol.tgl_lahir)
-            const diff = new Date(today.getTime() - birth.getTime())
-            let umur = diff.getFullYear() - 1970
-            let statusUmur = 'Th'
+        noRawat = await setNoRawat(dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter)
+        noReg = await setNoReg(noRawat, dataTujuan.kd_poli, dataTujuan.kd_dokter)
+
+        if (!isRegistered) {
+            statusDaftar = await setSttsDaftar(dataPasien.no_rkm_medis)
+            biayaReg = await setBiayaReg(dataTujuan.kd_poli, setSttsDaftar)
+            statusPoli = await setStatusPoli(dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter)
+            birth = new Date(dataPasien.tgl_lahir)
+            diff = new Date(today.getTime() - birth.getTime())
+            umur = diff.getFullYear() - 1970
             if (diff.getFullYear() - 1970 === 0) {
                 umur = diff.getMonth()
                 statusUmur = 'Bl'
@@ -665,196 +909,44 @@ const confirmCustomInputSubmit = async () => {
                     statusUmur = 'Hr'
                 }
             }
-            const jamReg = `${n(today.getHours(), 2)}:${n(today.getMinutes(), 2)}:${n(today.getSeconds(), 2)}`
-            const noRawat = await setNoRawat()
-            const tanggal = today.toDateInputValue()
-            const alamatPJ = `${dataKontrol.alamat}, ${dataKontrol.nm_kel}, ${dataKontrol.nm_kec}, ${dataKontrol.nm_kab}`
-            query = {
-                sql: "INSERT INTO reg_periksa VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                values: [noReg, noRawat, tanggal, jamReg, dataTujuan.kd_dokter, dataKontrol.no_rkm_medis, dataTujuan.kd_poli, dataKontrol.namakeluarga, alamatPJ, dataKontrol.keluarga, biayaReg, 'Belum', statusDaftar, 'Ralan', 'A65', umur, statusUmur, 'Belum Bayar', statusPoli]
-            }
-            await window.api.mysql(query)
-            query = {
-                sql: "SELECT DATE_ADD(CONCAT(?, ' ', ?), INTERVAL ? MINUTE) as estimate",
-                values: [tanggal, dataTujuan.jam_mulai.slice(0, -3), parseInt(noReg) * 10]
-            }
-            const estimate = await window.api.mysql(query)
-            const dataAntrean = {
-                "kodebooking": noRawat,
-                "jenispasien": "JKN",
-                "nomorkartu": dataKontrol.no_kartu,
-                "nik": dataKontrol.no_ktp,
-                "nohp": dataKontrol.no_tlp,
-                "kodepoli": dataTujuan.kd_poli_bpjs,
-                "namapoli": dataTujuan.nm_poli_bpjs,
-                "pasienbaru": 0,
-                "norm": dataKontrol.no_rkm_medis,
-                "tanggalperiksa": tanggal,
-                "kodedokter": dataTujuan.kd_dokter_bpjs,
-                "namadokter": dataTujuan.nm_dokter_bpjs,
-                "jampraktek": `${dataTujuan.jam_mulai.slice(0, -3)}-${dataTujuan.jam_selesai.slice(0, -3)}`,
-                "jeniskunjungan": 3,
-                "nomorreferensi": customState,
-                "nomorantrean": `${dataTujuan.kd_poli}-${noReg}`,
-                "angkaantrean": parseInt(noReg),
-                "estimasidilayani": Date.parse(estimate[0].estimate),
-                "sisakuotajkn": dataTujuan.kuota - parseInt(noReg),
-                "kuotajkn": dataTujuan.kuota,
-                "sisakuotanonjkn": dataTujuan.kuota - parseInt(noReg),
-                "kuotanonjkn": dataTujuan.kuota,
-                "keterangan": "Peserta harap 30 menit lebih awal guna pencatatan administrasi."
-            }
-            const resAntrean = await window.api.addAntrean(dataAntrean)
-            if (![200, 208].includes(resAntrean.metadata.code)) {
-                throw new Error("Gagal add Antrean BPJS")
-            }
- 
-            const dataSep = {
-                "request": {
-                    "t_sep": {
-                        "noKartu": dataKontrol.no_kartu,
-                        "tglSep": tanggal,
-                        "ppkPelayanan": "1104R005",
-                        "jnsPelayanan": "2",
-                        "klsRawat": {
-                            "klsRawatHak": dataKontrol.klsRawat,
-                            "klsRawatNaik": "",
-                            "pembiayaan": "",
-                            "penanggungJawab": ""
-                        },
-                        "noMR": dataKontrol.no_rkm_medis,
-                        "rujukan": {
-                            "asalRujukan": `${dataKontrol.asal_rujukan.charAt(0)}`,
-                            "tglRujukan": dataKontrol.tglrujukan,
-                            "noRujukan": (dataKontrol.no_rujukan.charAt(12) == "K") ? dataKontrol[0].no_sep : dataKontrol[0].no_rujukan,
-                            "ppkRujukan": dataKontrol.kdppkrujukan
-                        },
-                        "catatan": "-",
-                        "diagAwal": dataKontrol.diagawal,
-                        "poli": {
-                            "tujuan": dataKontrol.kd_poli_bpjs,
-                            "eksekutif": "0"
-                        },
-                        "cob": {
-                            "cob": "0"
-                        },
-                        "katarak": {
-                            "katarak": dataKontrol.katarak.charAt(0)
-                        },
-                        "jaminan": {
-                            "lakaLantas": dataKontrol.lakalantas,
-                            "noLP": "",
-                            "penjamin": {
-                                "tglKejadian": (dataKontrol.lakalantas != 0) ? dataKontrol.tglkkl : "",
-                                "keterangan": "",
-                                "suplesi": {
-                                    "suplesi": (dataKontrol.lakalantas != 0) ? "1" : "0",
-                                    "noSepSuplesi": (dataKontrol.lakalantas != 0) ? ((dataKontrol.no_sep_suplesi) ? dataKontrol.no_sep_suplesi : dataKontrol.no_sep) : "",
-                                    "lokasiLaka": {
-                                        "kdPropinsi": (dataKontrol.lakalantas != 0) ? dataKontrol.kdprop : "",
-                                        "kdKabupaten": (dataKontrol.lakalantas != 0) ? dataKontrol.kdkab : "",
-                                        "kdKecamatan": (dataKontrol.lakalantas != 0) ? dataKontrol.kdkec : ""
-                                    }
-                                }
-                            }
-                        },
-                        "tujuanKunj": (dataKontrol.no_rujukan.charAt(12) == 'K') ? "0" : "2",
-                        "flagProcedure": "",
-                        "kdPenunjang": "",
-                        "assesmentPel": (dataKontrol.no_rujukan.charAt(12) == 'K') ? "" : "5",
-                        "skdp": {
-                            "noSurat": dataKontrol.no_surat,
-                            "kodeDPJP": dataTujuan.kd_dokter_bpjs
-                        },
-                        "dpjpLayan": dataTujuan.kd_dokter_bpjs,
-                        "noTelp": dataKontrol.notelep,
-                        "user": "Bridging RS Karomah Holistic"
-                    }
-                }
-            }
-            const resultSep = await window.api.sep(dataSep)
-            if (![200, "200"].includes(resultSep.metadata.code)) {
-                console.log(resultSep)
-                throw new Error("Gagal pembuatan SEP BPJS")
-            }
-            query = {
-                sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
-                values: [
-                    resultSep.response.sep.noSep,
-                    noRawat,
-                    resultSep.response.sep.tglSep,
-                    dataKontrol.tglrujukan,
-                    resultSep.response.sep.noRujukan,
-                    dataKontrol.kdppkrujukan,
-                    dataKontrol.nmppkrujukan,
-                    '1104R005',
-                    'RS KAROMAH HOLISTIC - KOTA PEKALONGAN',
-                    '2',
-                    resultSep.response.sep.catatan,
-                    dataKontrol.diagawal,
-                    dataKontrol.nmdiagnosaawal,
-                    resultSep.response.sep.kdPoli,
-                    resultSep.response.sep.poli,
-                    dataKontrol.klsrawat,
-                    "", "", "",
-                    `${dataKontrol.lakalantas}`,
-                    "APM",
-                    resultSep.response.sep.peserta.noMr,
-                    resultSep.response.sep.peserta.nama,
-                    resultSep.response.sep.peserta.tglLahir,
-                    resultSep.response.sep.peserta.jnsPeserta,
-                    dataKontrol.jkel,
-                    resultSep.response.sep.peserta.noKartu,
-                    resultSep.response.sep.tglSep,
-                    dataKontrol.asal_rujukan,
-                    "0. Tidak", "0. Tidak",
-                    dataKontrol.notelep,
-                    dataKontrol.katarak,
-                    (dataKontrol.lakalantas != 0) ? dataKontrol.tglkkl : "0000-00-00",
-                    (dataKontrol.lakalantas != 0) ? "KLL" : "",
-                    (dataKontrol.lakalantas != 0) ? "1.Ya" : "0. Tidak",
-                    (dataKontrol.lakalantas != 0) ? ((dataKontrol.no_sep_suplesi) ? dataKontrol[0].no_sep_suplesi : dataKontrol.no_sep) : "",
-                    (dataKontrol.lakalantas != 0) ? dataKontrol.kdprop : "",
-                    (dataKontrol.lakalantas != 0) ? dataKontrol.nmprop : "",
-                    (dataKontrol.lakalantas != 0) ? dataKontrol.kdkab : "",
-                    (dataKontrol.lakalantas != 0) ? dataKontrol.nmkab : "",
-                    (dataKontrol.lakalantas != 0) ? dataKontrol.kdkec : "",
-                    (dataKontrol.lakalantas != 0) ? dataKontrol.nmkec : "",
-                    resultSep.response.sep.noRujukan,
-                    dataKontrol.kd_dokter_bpjs,
-                    dataKontrol.nm_dokter_bpjs,
-                    (dataKontrol.no_rujukan.charAt(12) == 'K') ? "0" : "2",
-                    "",
-                    "",
-                    (dataKontrol.no_rujukan.charAt(12) == 'K') ? "" : "5",
-                    dataKontrol.kd_dokter_bpjs,
-                    dataKontrol.nm_dokter_bpjs
-                ]
-            }
-            await window.api.mysql(query)
- 
-            await taskId3(noRawat)
-            query = {
-                sql: "INSERT INTO mutasi_berkas(no_rawat, status, dikirim) VALUES(?, ?, NOW())",
-                values: [noRawat, 'Sudah Dikirim']
-            }
-            await window.api.mysql(query)
-            query = {
-                sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
-                values: [noRawat, '3']
-            }
-            await window.api.mysql(query)
-            window.api.send('APMPrint', {
-                noRawat: noRawat,
-                nama: dataKontrol.nm_pasien,
-                noRM: dataKontrol.no_rkm_medis,
-                jk: dataKontrol.jk,
-                jenis: 'BPJS Kesehatan',
-                poli: dataTujuan.nm_poli,
-                dokter: dataTujuan.nm_dokter
-            })
+            jamReg = `${n(today.getHours(), 2)}:${n(today.getMinutes(), 2)}:${n(today.getSeconds(), 2)}`
+            alamatPJ = `${dataPasien.alamat}, ${dataPasien.nm_kel}, ${dataPasien.nm_kec}, ${dataPasien.nm_kab}`
+
+            doRegister(noReg, noRawat, tanggal, jamReg, dataTujuan.kd_dokter, noRM, dataTujuan.kd_poli, dataPasien.namaKeluarga, alamatPJ, dataPasien.keluarga, biayaReg, statusDaftar, umur, statusUmur, statusPoli)
         }
+
+        await addAntrean(
+            noRawat,
+            dataPasien.no_peserta,
+            dataPasien.no_ktp,
+            dataPasien.no_tlp,
+            dataTujuan.kd_poli_bpjs,
+            dataTujuan.nm_poli_bpjs,
+            dataPasien.no_rkm_medis,
+            tanggal,
+            dataTujuan.kd_dokter_bpjs,
+            dataTujuan.nm_dokter_bpjs,
+            `${dataTujuan.jam_mulai.slice(0, -3)}-${dataTujuan.jam_selesai.slice(0, -3)}`,
+            (code == 'B') ? 4 : 1,
+            customState,
+            `${dataTujuan.kd_poli}-${noReg}`,
+            parseInt(noReg),
+            await getEstimate(tanggal,  dataTujuan.jam_mulai, noReg),
+            dataTujuan.kuota - parseInt(noReg),
+            dataTujuan.kuota,
+            dataTujuan.kuota - parseInt(noReg),
+            dataTujuan.kuota
+        )
+
+        await addSEP(noRawat, isNewReference, data, dataPasien, dataTujuan, tanggal, asalRujukan, lakalantas)
+
+        await taskId3(noRawat)
+        
+        await saveTaskId3(noRawat)
+
         APMProcess = false
+        customState = ""
+        reloadCustomInput()
         BPJSModal.hide()
         Swal.close()
         Swal.fire({
@@ -865,6 +957,7 @@ const confirmCustomInputSubmit = async () => {
             showConfirmButton: false,
             timer: 3000
         })
+
     } catch (error) {
         BPJSModal.hide()
         handleError(error)
@@ -1151,16 +1244,7 @@ const daftar = async () => {
         }
         await window.api.mysql(query)
         await taskId3(noRawat)
-        query = {
-            sql: "INSERT INTO mutasi_berkas(no_rawat, status, dikirim) VALUES(?, ?, NOW())",
-            values: [noRawat, 'Sudah Dikirim']
-        }
-        await window.api.mysql(query)
-        query = {
-            sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
-            values: [noRawat, '3']
-        }
-        await window.api.mysql(query)
+        await saveTaskId3(noRawat)
         window.api.send('APMPrint', {
             noRawat: noRawat,
             nama: dataPasien.nm_pasien,
@@ -1192,41 +1276,63 @@ const taskId3 = async(booking) => {
         "taskid": 3,
         "waktu": Date.now()
     }
-    return await window.api.taskId(dataTaskId)
-} 
- 
-const setNoReg = (poli, dokter) => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const query = {
-                sql: "SELECT ifnull(MAX(CONVERT(RIGHT(no_reg,3),signed)),0) AS no_reg FROM reg_periksa WHERE kd_poli = ? AND kd_dokter = ? AND tgl_registrasi = CURDATE() ORDER BY no_reg DESC LIMIT 1",
-                values: [poli, dokter]
-            }
-            const data = await window.api.mysql(query)
-            const nextNoReg = (!data.length) ? n(1, 3) : n((parseInt(data[0].no_reg) + 1), 3)
-            resolve(nextNoReg)
-        } catch (error) {
-            reject(error)
-        }
-    })
+    await window.api.taskId(dataTaskId)
+}
+
+const saveTaskId3 = async noRawat => {
+    let query
+    query = {
+        sql: "INSERT INTO mutasi_berkas(no_rawat, status, dikirim) VALUES(?, ?, NOW())",
+        values: [noRawat, 'Sudah Dikirim']
+    }
+    await window.api.mysql(query)
+    query = {
+        sql: "INSERT INTO referensi_mobilejkn_bpjs_taskid VALUES(?, ?, NOW())",
+        values: [noRawat, '3']
+    }
+    await window.api.mysql(query)
 }
  
-const setNoRawat = () => {
-    return new Promise(async (resolve, reject) => {
-        try {
-            const today = new Date()
-            const query = {
-                sql: "SELECT ifnull(MAX(CONVERT(RIGHT(no_rawat,6),signed)),0) as noRawat FROM reg_periksa WHERE tgl_registrasi = ?",
-                values: [`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`]
-            }
-            const data = await window.api.mysql(query)
-            const noRawat = (!data.length) ? n(1, 6) : n((parseInt(data[0].noRawat) + 1), 6)
-            const nextNoRawat = `${today.getFullYear()}/${n(today.getMonth() + 1, 2)}/${n(today.getDate(), 2)}/${noRawat}`
-            resolve(nextNoRawat)
-        } catch (error) {
-            reject(error)
-        }
-    })
+const setNoReg = async (noRawat, kdPoli, kdDokter) => {
+    let query, data
+    query = {
+        sql: "SELECT no_reg FROM reg_periksa WHERE no_rawat = ?",
+        values: [noRawat]
+    }
+    data = await window.api.mysql(query)
+    if (data.length > 0) {
+        return data[0].no_reg
+    }
+
+    query = {
+        sql: "SELECT ifnull(MAX(CONVERT(RIGHT(no_reg,3),signed)),0) AS no_reg FROM reg_periksa WHERE kd_poli = ? AND kd_dokter = ? AND tgl_registrasi = CURDATE() ORDER BY no_reg DESC LIMIT 1",
+        values: [kdPoli, kdDokter]
+    }
+    data = await window.api.mysql(query)
+    const nextNoReg = (!data.length) ? n(1, 3) : n((parseInt(data[0].no_reg) + 1), 3)
+    return nextNoReg
+}
+ 
+const setNoRawat = async (noRM, kdPoli, kdDokter) => {
+    const today = new Date()
+    let query, data
+    query = {
+        sql: "SELECT no_rawat FROM reg_periksa WHERE no_rkm_medis = ? AND kd_poli =? AND kd_dokter = ?",
+        values: [noRM, kdPoli, kdDokter]
+    }
+    data = await window.api.mysql(query)
+    if (data.length > 0) {
+        return data[0].no_rawat
+    }
+
+    query = {
+        sql: "SELECT ifnull(MAX(CONVERT(RIGHT(no_rawat,6),signed)),0) as noRawat FROM reg_periksa WHERE tgl_registrasi = ?",
+        values: [`${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`]
+    }
+    data = await window.api.mysql(query)
+    const noRawat = (!data.length) ? n(1, 6) : n((parseInt(data[0].noRawat) + 1), 6)
+    const nextNoRawat = `${today.getFullYear()}/${n(today.getMonth() + 1, 2)}/${n(today.getDate(), 2)}/${noRawat}`
+    return nextNoRawat
 }
  
 const setSttsDaftar = (noRM) => {
@@ -1336,7 +1442,7 @@ const fetchRujukanData = async code => {
         throw new Error("Rujukan Tidak ditemukan")
     }
 
-    return dataRujukan
+    return dataRujukan.response.rujukan
 }
 
 const getPasien = async (noka, nik) => {
@@ -1410,3 +1516,194 @@ const checkRegister = async (noRM, kdPoli, kdDokter) => {
 
     return data.length > 0
 }
+
+const doRegister = async (noReg, noRawat, tanggal, jamReg, kdDokter, noRM, kdPoli, namaKeluarga, alamatPJ, keluarga, biayaReg, statusDaftar, umur, statusUmur, statusPoli) => {
+    const query =  {
+        sql: "INSERT INTO reg_periksa VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        values: [noReg, noRawat, tanggal, jamReg, kdDokter, noRM, kdPoli, namaKeluarga, alamatPJ, keluarga, biayaReg, 'Belum', statusDaftar, 'Ralan', 'A65', umur, statusUmur, 'Belum Bayar', statusPoli]
+    }
+
+    const data = await window.api.mysql(query)
+
+    if (data.affectedRows < 1) {
+        throw new Error("Registrasi Gagal")
+    }
+}
+
+const getEstimate = async (tanggal, jamMulai, noReg) => {
+    const query = {
+        sql: "SELECT DATE_ADD(CONCAT(?, ' ', ?), INTERVAL ? MINUTE) as estimate",
+        values: [tanggal, jamMulai.slice(0, -3), parseInt(noReg) * 10]
+    }
+
+    const data = await window.api.mysql(query)
+
+    return data[0].estimate
+}
+
+const addAntrean = async (kodeBooking, noka, nik, noHp, kdPoliBpjs, nmPoliBpjs,  noRM, tanggal, kdDokterBpjs, nmDokterBpjs, jamPraktek, jnsKunjungan, noReference, noAntrean, angkaAntrean, estimasi, sisakuotajkn, kuotajkn, sisakuotanonjkn, kuotanonjkn) => {
+    const dataAntrean = {
+        "kodebooking": kodeBooking,
+        "jenispasien": "JKN",
+        "nomorkartu": noka,
+        "nik": nik,
+        "nohp": noHp,
+        "kodepoli": kdPoliBpjs,
+        "namapoli": nmPoliBpjs,
+        "pasienbaru": 0,
+        "norm": noRM,
+        "tanggalperiksa": tanggal,
+        "kodedokter": kdDokterBpjs,
+        "namadokter": nmDokterBpjs,
+        "jampraktek": jamPraktek,
+        "jeniskunjungan": jnsKunjungan,
+        "nomorreferensi": noReference,
+        "nomorantrean": noAntrean,
+        "angkaantrean": angkaAntrean,
+        "estimasidilayani": Date.parse(estimasi),
+        "sisakuotajkn": sisakuotajkn,
+        "kuotajkn": kuotajkn,
+        "sisakuotanonjkn": sisakuotanonjkn,
+        "kuotanonjkn": kuotanonjkn,
+        "keterangan": "Peserta harap 30 menit lebih awal guna pencatatan administrasi."
+    }
+
+    const result = await windows.api.addAntrean(dataAntrean)
+
+    if (![200, 208].includes(result.metadata.code)) {
+        throw new Error("Gagal add Antrean BPJS")
+    }
+}
+
+const addSEP = async (noRawat, isNewReference, data, dataPasien, dataTujuan, tanggal, asalRujukan, lakalantas) => {
+    const dataSep = {
+        "request": {
+            "t_sep": {
+                "noKartu": dataPasien.no_peserta,
+                "tglSep": tanggal,
+                "ppkPelayanan": "1104R005",
+                "jnsPelayanan": "2",
+                "klsRawat": {
+                    "klsRawatHak": (isNewReference)  ? data.peserta.hakKelas.kode : dataPasien.klsRawat,
+                    "klsRawatNaik": "",
+                    "pembiayaan": "",
+                    "penanggungJawab": ""
+                },
+                "noMR": dataPasien.no_rkm_medis,
+                "rujukan": {
+                    "asalRujukan": `${asalRujukan}`,
+                    "tglRujukan": (isNewReference) ? data.tglKunjungan : dataPasien.tglrujukan,
+                    "noRujukan": (isNewReference) ? data.noKunjungan : ((dataPasien.no_rujukan.charAt(12) == "K") ? dataPasien.no_sep  : dataPasien.no_rujukan),
+                    "ppkRujukan": (isNewReference) ? data.provPerujuk.kode : dataPasien.kdppkrujukan
+                },
+                "catatan": "-",
+                "diagAwal": (isNewReference) ? data.diagnosa.kode : dataPasien.diagawal,
+                "poli": {
+                    "tujuan": (isNewReference) ? data.poliRujukan.kode : dataPasien.kd_poli_bpjs,
+                    "eksekutif": "0"
+                },
+                "cob": {
+                    "cob": "0"
+                },
+                "katarak": {
+                    "katarak": (isNewReference) ? "" : `${dataPasien.katarak.charAt(0)}`
+                },
+                "jaminan": {
+                    "lakaLantas": `${lakalantas}`,
+                    "noLP": "",
+                    "penjamin": {
+                        "tglKejadian": (lakalantas != 0) ? dataPasien.tglkll : "",
+                        "keterangan": "",
+                        "suplesi": {
+                            "suplesi": (lakalantas != 0) ? "1" : "0",
+                            "noSepSuplesi": (lakalantas != 0) ? ((dataPasien.no_sep_suplesi) ? dataPasien.no_sep_suplesi : dataPasien.no_sep) : "",
+                            "lokasiLaka": {
+                                "kdPropinsi": (lakalantas != 0) ? dataPasien.kdprop : "",
+                                "kdKabupaten": (lakalantas != 0) ? dataPasien.kdkab : "",
+                                "kdKecamatan": (lakalantas != 0) ? dataPasien.kdkec : ""
+                            }
+                        }
+                    }
+                },
+                "tujuanKunj": (isNewReference) ? "0" : ((dataPasien.no_rujukan.charAt(12) == 'K') ? "0" : "2"),
+                "flagProcedure": "",
+                "kdPenunjang": "",
+                "assesmentPel": (isNewReference) ? "" : ((dataPasien.no_rujukan.charAt(12) == 'K') ? "" : "2"),
+                "skdp": {
+                    "noSurat": (isNewReference) ? "" : dataPasien.no_surat,
+                    "kodeDPJP": (isNewReference) ? "" : dataTujuan.kd_dokter_bpjs
+                },
+                "dpjpLayan": dataTujuan.kd_dokter_bpjs,
+                "noTelp": dataPasien.no_tlp,
+                "user": "Bridging RS Karomah Holistic"
+            }
+        }
+    }
+
+    const resultSep = await window.api.sep(dataSep)
+
+    if (![200, "200"].includes(resultSep.metadata.code)) {
+        throw new Error("Gagal pembuatan SEP BPJS")
+    }
+
+    await saveSEP(noRawat, isNewReference, resultSep, data, dataPasien, dataTujuan, asalRujukan, lakalantas)
+}
+
+const saveSEP = async (noRawat, isNewReference, resultSep, data, dataPasien, dataTujuan, asalRujukan, lakalantas) => {
+    const query = {
+        sql: "INSERT INTO bridging_sep VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        values: [
+            resultSep.noSep,
+            noRawat,
+            resultSep.tglSep,
+            (isNewReference) ? data.tglKunjungan : dataPasien.tglrujukan,
+            resultSep.noRujukan,
+            (isNewReference) ? data.provPerujuk.kode : dataPasien.kdppkrujukan,
+            (isNewReference) ? data.provPerujuk.nama : dataPasien.nmppkrujukan,
+            '1104R005',
+            'RS KAROMAH HOLISTIC - KOTA PEKALONGAN',
+            '2',
+            resultSep.catatan,
+            (isNewReference) ? data.diagnosa.kode : dataPasien.diagawal,
+            (isNewReference) ? data.diagnosa.nama : dataPasien.nmdiagawal,
+            resultSep.kdPoli,
+            resultSep.poli,
+            (isNewReference) ? data.peserta.hakKelas.kode : dataPasien.klsrawat,
+            "", "", "",
+            `${lakalantas}`,
+            "APM RS Karomah Holistic",
+            resultSep.peserta.noMr,
+            resultSep.peserta.nama,
+            resultSep.peserta.tglLahir,
+            resultSep.peserta.jnsPeserta,
+            dataPasien.jk,
+            resultSep.peserta.noKartu,
+            resultSep.tglSep,
+            (asalRujukan == 1) ? "1. Faskes 1" : "2. Faskes 2(RS)",
+            "0. Tidak", "0. Tidak",
+            dataPasien.no_tlp,
+            (isNewReference) ? "" : data.katarak,
+            (lakalantas != 0) ? data.tglkkl : "0000-00-00",
+            (lakalantas != 0) ? "KLL" : "",
+            (lakalantas != 0) ? "1.Ya" : "0. Tidak",
+            (lakalantas != 0) ? ((data.no_sep_suplesi) ? data.no_sep_suplesi : data.no_sep) : "",
+            (lakalantas != 0) ? data.kdprop : "",
+            (lakalantas != 0) ? data.nmprop : "",
+            (lakalantas != 0) ? data.kdkab : "",
+            (lakalantas != 0) ? data.nmkab : "",
+            (lakalantas != 0) ? data.kdkec : "",
+            (lakalantas != 0) ? data.nmkec : "",
+            (isNewReference)  ? "" : dataPasien.no_surat,
+            dataTujuan.kd_dokter_bpjs,
+            dataTujuan.nm_dokter_bpjs,
+            (isNewReference) ? "0" : ((data.no_rujukan.charAt(12) == 'K') ? "0" : "2"),
+            "", "",
+            (isNewReference) ? "" : ((data.no_rujukan.charAt(12) == 'K') ? "" : "5"),
+            dataTujuan.kd_dokter_bpjs,
+            dataTujuan.nm_dokter_bpjs,
+        ]
+    }
+
+   await window.api.mysql(query)
+}
+
