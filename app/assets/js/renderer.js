@@ -3,7 +3,7 @@ const hari = ['AKHAD', 'SENIN', 'SELASA', 'RABU', 'KAMIS', 'JUMAT', 'SABTU']
 let numState = ""
 let customState = ""
 let APMProcess = false
-let isRegistered = false
+
 let APMModal
 let BPJSModal
 
@@ -401,6 +401,7 @@ const customInputSubmit = async () => {
 
     const today = new Date()
     try {
+
         document.getElementById('customInput').removeAttribute('onblur')
         const code = customState.charAt(12)
         let data, dataTujuan
@@ -414,10 +415,8 @@ const customInputSubmit = async () => {
         } else {
             data = await getKontrol(customState)
  
-            dataTujuan = await getTujuan(dataKontrol.kd_poli_bpjs, hari[today.getDay()])
+            dataTujuan = await getTujuan(data.kd_poli_bpjs, hari[today.getDay()])
         }
-
-        isRegistered = await checkRegister(data.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter)
 
         fillForm(data.no_rkm_medis, data.nm_pasien, data.alamat, dataTujuan.nm_poli, dataTujuan.nm_dokter)
         APMProcess = false
@@ -878,28 +877,30 @@ const confirmCustomInputSubmit = async () => {
         let data, dataPasien, dataTujuan, noReg, noRawat, statusDaftar, biayaReg, statusPoli, umur, statusUmur, jamReg, alamatPJ, query, lakalantas, asalRujukan
 
         if (isNewReference) {
-            data = await fetchRujukanData(code)
+            data = await fetchRujukanData(customState)
             dataPasien = await getPasien(data.response.rujukan.peserta.noKartu, data.response.rujukan.peserta.nik)
             dataTujuan = await getTujuan(data.response.rujukan.poliRujukan.kode, hari[today.getDay()])
             lakalantas = 0
             asalRujukan = code === 'B' ? "2" : "1"
         } else {
-            data = await getKontrol(code)
+            data = await getKontrol(customState)
             dataPasien = data
             dataTujuan = await getTujuan(data.kd_poli_bpjs, hari[today.getDay()])
             lakalantas = data.lakalantas
             asalRujukan = data.asal_rujukan.charAt(0)
         }
 
-        noRawat = await setNoRawat(dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter)
+	const isRegistered = await checkRegister(dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter, tanggal)
+
+        noRawat = await setNoRawat(dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter, tanggal)
         noReg = await setNoReg(noRawat, dataTujuan.kd_poli, dataTujuan.kd_dokter)
 
         if (!isRegistered) {
             statusDaftar = await setSttsDaftar(dataPasien.no_rkm_medis)
             biayaReg = await setBiayaReg(dataTujuan.kd_poli, setSttsDaftar)
             statusPoli = await setStatusPoli(dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter)
-            birth = new Date(dataPasien.tgl_lahir)
-            diff = new Date(today.getTime() - birth.getTime())
+            const birth = new Date(dataPasien.tgl_lahir)
+            const diff = new Date(today.getTime() - birth.getTime())
             umur = diff.getFullYear() - 1970
             if (diff.getFullYear() - 1970 === 0) {
                 umur = diff.getMonth()
@@ -912,7 +913,7 @@ const confirmCustomInputSubmit = async () => {
             jamReg = `${n(today.getHours(), 2)}:${n(today.getMinutes(), 2)}:${n(today.getSeconds(), 2)}`
             alamatPJ = `${dataPasien.alamat}, ${dataPasien.nm_kel}, ${dataPasien.nm_kec}, ${dataPasien.nm_kab}`
 
-            doRegister(noReg, noRawat, tanggal, jamReg, dataTujuan.kd_dokter, noRM, dataTujuan.kd_poli, dataPasien.namaKeluarga, alamatPJ, dataPasien.keluarga, biayaReg, statusDaftar, umur, statusUmur, statusPoli)
+            await doRegister(noReg, noRawat, tanggal, jamReg, dataTujuan.kd_dokter, noRM, dataTujuan.kd_poli, dataPasien.namaKeluarga, alamatPJ, dataPasien.keluarga, biayaReg, statusDaftar, umur, statusUmur, statusPoli)
         }
 
         await addAntrean(
@@ -927,7 +928,7 @@ const confirmCustomInputSubmit = async () => {
             dataTujuan.kd_dokter_bpjs,
             dataTujuan.nm_dokter_bpjs,
             `${dataTujuan.jam_mulai.slice(0, -3)}-${dataTujuan.jam_selesai.slice(0, -3)}`,
-            (code == 'B') ? 4 : 1,
+            (isNewReference) ? ((code == 'B') ? 4 : 1) : 3,
             customState,
             `${dataTujuan.kd_poli}-${noReg}`,
             parseInt(noReg),
@@ -1313,12 +1314,12 @@ const setNoReg = async (noRawat, kdPoli, kdDokter) => {
     return nextNoReg
 }
  
-const setNoRawat = async (noRM, kdPoli, kdDokter) => {
+const setNoRawat = async (noRM, kdPoli, kdDokter, tanggal) => {
     const today = new Date()
     let query, data
     query = {
-        sql: "SELECT no_rawat FROM reg_periksa WHERE no_rkm_medis = ? AND kd_poli =? AND kd_dokter = ?",
-        values: [noRM, kdPoli, kdDokter]
+        sql: "SELECT no_rawat FROM reg_periksa WHERE no_rkm_medis = ? AND kd_poli =? AND kd_dokter = ? AND tgl_registrasi = ?",
+        values: [noRM, kdPoli, kdDokter, tanggal]
     }
     data = await window.api.mysql(query)
     if (data.length > 0) {
@@ -1506,10 +1507,10 @@ const handleError = async error => {
     })
 }
 
-const checkRegister = async (noRM, kdPoli, kdDokter) => {
+const checkRegister = async (noRM, kdPoli, kdDokter, tanggal) => {
     const query = {
-        sql: "SELECT no_rawat FROM reg_periksa WHERE no_rkm_medis = ? and kd_poli = ? and kd_dokter = ?",
-        values: [noRM, kdPoli, kdDokter]
+        sql: "SELECT no_rawat FROM reg_periksa WHERE no_rkm_medis = ? and kd_poli = ? and kd_dokter = ? and tgl_registrasi = ?",
+        values: [noRM, kdPoli, kdDokter, tanggal]
     }
 
     const data = await window.api.mysql(query)
@@ -1568,7 +1569,7 @@ const addAntrean = async (kodeBooking, noka, nik, noHp, kdPoliBpjs, nmPoliBpjs, 
         "keterangan": "Peserta harap 30 menit lebih awal guna pencatatan administrasi."
     }
 
-    const result = await windows.api.addAntrean(dataAntrean)
+    const result = await window.api.addAntrean(dataAntrean)
 
     if (![200, 208].includes(result.metadata.code)) {
         throw new Error("Gagal add Antrean BPJS")
@@ -1646,7 +1647,7 @@ const addSEP = async (noRawat, isNewReference, data, dataPasien, dataTujuan, tan
         throw new Error("Gagal pembuatan SEP BPJS")
     }
 
-    await saveSEP(noRawat, isNewReference, resultSep, data, dataPasien, dataTujuan, asalRujukan, lakalantas)
+    await saveSEP(noRawat, isNewReference, resultSep.response.sep, data, dataPasien, dataTujuan, asalRujukan, lakalantas)
 }
 
 const saveSEP = async (noRawat, isNewReference, resultSep, data, dataPasien, dataTujuan, asalRujukan, lakalantas) => {
