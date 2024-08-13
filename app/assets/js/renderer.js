@@ -458,6 +458,12 @@ const confirmCustomInputSubmit = async () => {
         noRawat = await setNoRawat(dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataTujuan.kd_dokter, tanggal)
         noReg = await setNoReg(noRawat, dataTujuan.kd_poli, dataTujuan.kd_dokter)
 
+        const isMJKN = await checkMJKN(noRawat)
+
+        if (isMJKN != "Bukan") {
+            checkinMJKN(isMJKN)
+        }
+
         if (!isRegistered) {
             statusDaftar = await setSttsDaftar(dataPasien.no_rkm_medis)
             biayaReg = await setBiayaReg(dataTujuan.kd_poli, setSttsDaftar)
@@ -881,7 +887,7 @@ const setNoRawat = async (noRM, kdPoli, kdDokter, tanggal) => {
     const today = new Date()
     let query, data
     query = {
-        sql: "SELECT no_rawat FROM reg_periksa WHERE no_rkm_medis = ? AND kd_poli =? AND kd_dokter = ? AND tgl_registrasi = ?",
+        sql: "SELECT no_rawat FROM reg_periksa WHERE no_rkm_medis = ? AND kd_poli =? AND kd_dokter = ? AND tgl_registrasi = ? and stts != 'Batal'",
         values: [noRM, kdPoli, kdDokter, tanggal]
     }
     data = await window.api.mysql(query)
@@ -1072,7 +1078,7 @@ const handleError = async error => {
 
 const checkRegister = async (noRM, kdPoli, kdDokter, tanggal) => {
     const query = {
-        sql: "SELECT no_rawat FROM reg_periksa WHERE no_rkm_medis = ? and kd_poli = ? and kd_dokter = ? and tgl_registrasi = ?",
+        sql: "SELECT no_rawat FROM reg_periksa WHERE no_rkm_medis = ? and kd_poli = ? and kd_dokter = ? and tgl_registrasi = ? and stts != 'Batal'",
         values: [noRM, kdPoli, kdDokter, tanggal]
     }
 
@@ -1229,7 +1235,7 @@ const saveSEP = async (noRawat, isNewReference, resultSep, data, dataPasien, dat
             '2',
             resultSep.catatan,
             (isNewReference) ? data.diagnosa.kode : dataPasien.diagawal,
-            (isNewReference) ? data.diagnosa.nama : dataPasien.nmdiagawal,
+            (isNewReference) ? data.diagnosa.nama : dataPasien.nmdiagnosaawal,
             resultSep.kdPoli,
             resultSep.poli,
             (isNewReference) ? data.peserta.hakKelas.kode : dataPasien.klsrawat,
@@ -1271,3 +1277,22 @@ const saveSEP = async (noRawat, isNewReference, resultSep, data, dataPasien, dat
    await window.api.mysql(query)
 }
 
+const checkMJKN = async (noRawat) => {
+    const query = {
+        sql: "SELECT nobooking FROM referensi_mobilejkn_bpjs WHERE no_rawat = ? AND status != 'Batal'",
+        values: [noRawat]
+    }
+
+    const result = window.api.mysql(query)
+
+    return (result.length > 0) ? result[0].nobooking : "Bukan"
+}
+
+const checkinMJKN = async (noBooking) => {
+    const query = {
+        sql: "UPDATE referensi_mobilejkn_bpjs SET status = 'Checkin', validasi = NOW(), statuskirim = 'Sudah' WHERE nobooking = ?",
+        values: [noBooking]
+    }
+
+    window.api.mysql(query)
+}
