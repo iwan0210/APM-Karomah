@@ -441,8 +441,8 @@ const confirmCustomInputSubmit = async () => {
 
         if (isNewReference) {
             data = await fetchRujukanData(customState)
-            dataPasien = await getPasien(data.response.rujukan.peserta.noKartu, data.response.rujukan.peserta.nik)
-            dataTujuan = await getTujuan(data.response.rujukan.poliRujukan.kode, hari[today.getDay()])
+            dataPasien = await getPasien(data.peserta.noKartu, data.peserta.nik)
+            dataTujuan = await getTujuan(data.poliRujukan.kode, hari[today.getDay()])
             lakalantas = 0
             asalRujukan = code === 'B' ? "2" : "1"
         } else {
