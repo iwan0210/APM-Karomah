@@ -407,9 +407,9 @@ const customInputSubmit = async () => {
 
             const dataRujukan = await fetchRujukanData(code)
 
-            data = await getPasien(dataRujukan.response.rujukan.peserta.noKartu, dataRujukan.response.rujukan.peserta.nik)
+            data = await getPasien(dataRujukan.peserta.noKartu, dataRujukan.peserta.nik)
 
-            dataTujuan = await getTujuan(dataRujukan.response.rujukan.poliRujukan.kode, hari[today.getDay()])
+            dataTujuan = await getTujuan(dataRujukan.poliRujukan.kode, hari[today.getDay()])
         } else {
             data = await getKontrol(customState)
  
