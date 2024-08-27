@@ -80,16 +80,7 @@ if (document.getElementById('checkin')) {
  
 const checkinSubmit = async (input) => {
     APMProcess = true
-    Swal.fire({
-        icon: 'info',
-        title: 'Loading',
-        text: 'Silahkan tunggu sebentar',
-        showConfirmButton: false,
-        allowOutsideClick: false,
-        didOpen: () => {
-            Swal.showLoading()
-        }
-    })
+    showLoading()
     try {
         const currentDate = new Date()
         const tanggal = currentDate.toDateInputValue()
