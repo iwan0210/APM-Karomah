@@ -1167,7 +1167,7 @@ const addSEP = async (noRawat, isNewReference, data, dataPasien, dataTujuan, tan
                     "cob": "0"
                 },
                 "katarak": {
-                    "katarak": (isNewReference) ? "" : `${dataPasien.katarak.charAt(0)}`
+                    "katarak": (isNewReference) ? "0" : `${dataPasien.katarak.charAt(0)}`
                 },
                 "jaminan": {
                     "lakaLantas": `${lakalantas}`,
@@ -1243,7 +1243,7 @@ const saveSEP = async (noRawat, isNewReference, resultSep, data, dataPasien, dat
             (asalRujukan == 1) ? "1. Faskes 1" : "2. Faskes 2(RS)",
             "0. Tidak", "0. Tidak",
             dataPasien.no_tlp,
-            (isNewReference) ? "" : data.katarak,
+            (isNewReference) ? "0. Tidak" : data.katarak,
             (lakalantas != 0) ? data.tglkkl : "0000-00-00",
             (lakalantas != 0) ? "KLL" : "",
             (lakalantas != 0) ? "1.Ya" : "0. Tidak",
