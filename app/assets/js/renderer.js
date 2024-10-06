@@ -451,10 +451,6 @@ const confirmCustomInputSubmit = async () => {
 
         const isMJKN = await checkMJKN(noRawat)
 
-        if (isMJKN != "Bukan") {
-            checkinMJKN(isMJKN)
-        }
-
         if (!isRegistered) {
             statusDaftar = await setSttsDaftar(dataPasien.no_rkm_medis)
             biayaReg = await setBiayaReg(dataTujuan.kd_poli, setSttsDaftar)
@@ -476,32 +472,36 @@ const confirmCustomInputSubmit = async () => {
             await doRegister(noReg, noRawat, tanggal, jamReg, dataTujuan.kd_dokter, dataPasien.no_rkm_medis, dataTujuan.kd_poli, dataPasien.namakeluarga, alamatPJ, dataPasien.keluarga, biayaReg, statusDaftar, umur, statusUmur, statusPoli)
         }
 
-        await addAntrean(
-            noRawat,
-            dataPasien.no_peserta,
-            dataPasien.no_ktp,
-            dataPasien.no_tlp,
-            dataTujuan.kd_poli_bpjs,
-            dataTujuan.nm_poli_bpjs,
-            dataPasien.no_rkm_medis,
-            tanggal,
-            dataTujuan.kd_dokter_bpjs,
-            dataTujuan.nm_dokter_bpjs,
-            `${dataTujuan.jam_mulai.slice(0, -3)}-${dataTujuan.jam_selesai.slice(0, -3)}`,
-            (isNewReference) ? ((code == 'B') ? 4 : 1) : 3,
-            customState,
-            `${dataTujuan.kd_poli}-${noReg}`,
-            parseInt(noReg),
-            await getEstimate(tanggal,  dataTujuan.jam_mulai, noReg),
-            dataTujuan.kuota - parseInt(noReg),
-            dataTujuan.kuota,
-            dataTujuan.kuota - parseInt(noReg),
-            dataTujuan.kuota
-        )
+        if (isMJKN != "Bukan") {
+            checkinMJKN(isMJKN)
+        } else {
+            await addAntrean(
+                noRawat,
+                dataPasien.no_peserta,
+                dataPasien.no_ktp,
+                dataPasien.no_tlp,
+                dataTujuan.kd_poli_bpjs,
+                dataTujuan.nm_poli_bpjs,
+                dataPasien.no_rkm_medis,
+                tanggal,
+                dataTujuan.kd_dokter_bpjs,
+                dataTujuan.nm_dokter_bpjs,
+                `${dataTujuan.jam_mulai.slice(0, -3)}-${dataTujuan.jam_selesai.slice(0, -3)}`,
+                (isNewReference) ? ((code == 'B') ? 4 : 1) : 3,
+                customState,
+                `${dataTujuan.kd_poli}-${noReg}`,
+                parseInt(noReg),
+                await getEstimate(tanggal,  dataTujuan.jam_mulai, noReg),
+                dataTujuan.kuota - parseInt(noReg),
+                dataTujuan.kuota,
+                dataTujuan.kuota - parseInt(noReg),
+                dataTujuan.kuota
+            )
+        }
 
         await addSEP(noRawat, isNewReference, data, dataPasien, dataTujuan, tanggal, asalRujukan, lakalantas)
 
-        await taskId3(noRawat)
+        await taskId3((isMJKN != 'Bukan') ? isMJKN : noRawat)
         
         await saveTaskId3(noRawat)
 
@@ -1132,7 +1132,7 @@ const addAntrean = async (kodeBooking, noka, nik, noHp, kdPoliBpjs, nmPoliBpjs, 
     const result = await window.api.addAntrean(dataAntrean)
 
     if (![200, 208].includes(result.metadata.code)) {
-        throw new Error("Gagal add Antrean BPJS")
+        throw new Error(result.metadata.message)
     }
 }
 
@@ -1204,7 +1204,7 @@ const addSEP = async (noRawat, isNewReference, data, dataPasien, dataTujuan, tan
     const resultSep = await window.api.sep(dataSep)
 
     if (![200, "200"].includes(resultSep.metadata.code)) {
-        throw new Error("Gagal pembuatan SEP BPJS")
+        throw new Error(resultSep.metadata.message)
     }
 
     await saveSEP(noRawat, isNewReference, resultSep.response.sep, data, dataPasien, dataTujuan, asalRujukan, lakalantas)
